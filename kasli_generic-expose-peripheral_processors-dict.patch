@@ -1,0 +1,45 @@
+From 52112d54f9c052159b88b78dc6bd712abd4f062c Mon Sep 17 00:00:00 2001
+From: Sebastien Bourdeauducq <sb@m-labs.hk>
+Date: Tue, 10 Dec 2019 10:30:06 +0800
+Subject: [PATCH] kasli_generic: expose peripheral_processors dictionary.
+ Closes #1403
+
+---
+ artiq/gateware/targets/kasli_generic.py | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
+
+diff --git a/artiq/gateware/targets/kasli_generic.py b/artiq/gateware/targets/kasli_generic.py
+index fc6dba19..f500d294 100755
+--- a/artiq/gateware/targets/kasli_generic.py
++++ b/artiq/gateware/targets/kasli_generic.py
+@@ -99,16 +99,18 @@ def peripheral_grabber(module, peripheral):
+     eem.Grabber.add_std(module, port, port_aux, port_aux2)
+ 
+ 
++peripheral_processors = {
++    "dio": peripheral_dio,
++    "urukul": peripheral_urukul,
++    "novogorny": peripheral_novogorny,
++    "sampler": peripheral_sampler,
++    "suservo": peripheral_suservo,
++    "zotino": peripheral_zotino,
++    "grabber": peripheral_grabber,
++}
++
++
+ def add_peripherals(module, peripherals):
+-    peripheral_processors = {
+-        "dio": peripheral_dio,
+-        "urukul": peripheral_urukul,
+-        "novogorny": peripheral_novogorny,
+-        "sampler": peripheral_sampler,
+-        "suservo": peripheral_suservo,
+-        "zotino": peripheral_zotino,
+-        "grabber": peripheral_grabber,
+-    }
+     for peripheral in peripherals:
+         peripheral_processors[peripheral["type"]](module, peripheral)
+ 
+-- 
+2.17.1
+
