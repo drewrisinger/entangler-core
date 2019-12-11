@@ -9,7 +9,8 @@ import typing
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 
 
-from dynaconf import settings  # noqa: E402
+import pkg_resources
+from dynaconf import LazySettings  # noqa: E402
 from migen import run_simulation  # noqa: E402
 
 # pylint: disable=import-error
@@ -18,6 +19,9 @@ from gateware_utils import advance_clock  # noqa: E402
 from gateware_utils import wait_until  # noqa: E402
 
 _LOGGER = logging.getLogger(__name__)
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 
 def int_to_bool_array(val: int, num_binary_digits: int) -> typing.Sequence[bool]:

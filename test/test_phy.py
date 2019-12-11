@@ -3,7 +3,8 @@ import logging
 import os
 import sys
 
-from dynaconf import settings
+import pkg_resources
+from dynaconf import LazySettings
 from migen import run_simulation  # noqa: E402
 
 # add gateware simulation tools "module" (at ./helpers/*)
@@ -13,6 +14,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 # ./helpers/gateware_utils
 from gateware_utils import advance_clock  # noqa: E402 pylint: disable=import-error
 from phytester import PhyTestHarness  # noqa: E402 pylint: disable=import-error
+
+
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 
 def test_basic(dut: PhyTestHarness):

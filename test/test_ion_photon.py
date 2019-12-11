@@ -7,8 +7,9 @@ import sys
 import typing
 
 import migen
+import pkg_resources
 import pytest
-from dynaconf import settings
+from dynaconf import LazySettings
 
 # fmt: off
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
@@ -20,6 +21,9 @@ from phytester import PhyTestHarness    # noqa: E402
 # fmt: on
 
 _LOGGER = logging.getLogger(__name__)
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 COARSE_CLOCK_PERIOD_NS = 8
 ION_PHOTON_HERALD_PATTERNS = (0b0101, 0b1010, 0b1100, 0b0011)
 

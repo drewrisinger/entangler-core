@@ -2,12 +2,16 @@
 import itertools
 import logging
 
-from dynaconf import settings
+import pkg_resources
+from dynaconf import LazySettings
 from migen import run_simulation
 
 from entangler.core import PatternMatcher
 
 _LOGGER = logging.getLogger(__name__)
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 
 def test_match_one_pattern_set(dut, pattern_set, num_signals):

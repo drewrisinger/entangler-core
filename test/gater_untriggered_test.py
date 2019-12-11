@@ -4,7 +4,8 @@ import logging
 import os
 import sys
 
-from dynaconf import settings
+import pkg_resources
+from dynaconf import LazySettings
 from migen import If
 from migen import Module
 from migen import run_simulation
@@ -19,7 +20,9 @@ from gateware_utils import MockPhy  # noqa: E402 pylint: disable=import-error
 
 #  ./helpers/gateware_utils
 _LOGGER = logging.getLogger(__name__)
-
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 class UntriggeredGaterHarness(Module):
     """Test harness to wrap & pass signals to a ``UntriggeredInputGater``."""

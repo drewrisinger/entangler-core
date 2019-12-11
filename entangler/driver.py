@@ -6,6 +6,7 @@ NOTE: requires ARTIQ >= 5, for the
 import enum
 
 import numpy as np
+import pkg_resources
 from artiq.coredevice.rtio import rtio_input_data
 from artiq.coredevice.rtio import rtio_input_timestamped_data
 from artiq.coredevice.rtio import rtio_output
@@ -13,8 +14,11 @@ from artiq.language.core import delay_mu
 from artiq.language.core import kernel
 from artiq.language.types import TInt32
 from artiq.language.types import TList
-from dynaconf import settings
+from dynaconf import LazySettings
 
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 # TODO: remove these
 class TimingChannels(enum.IntEnum):

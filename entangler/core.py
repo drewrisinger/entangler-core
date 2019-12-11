@@ -5,8 +5,9 @@ Note: STB = "strobe", I forgot that one.
 import logging
 import typing
 
+import pkg_resources
 import migen.build.generic_platform as platform
-from dynaconf import settings
+from dynaconf import LazySettings
 from migen import Cat
 from migen import FSM
 from migen import If
@@ -21,6 +22,9 @@ from migen import Signal
 # with the master's signal as long as the entangler core isn't active. The timing will
 # be different from entangler-driven use, but this is only for auxiliary calibration
 # purposes.
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 SEQUENCER_IDX_422ps = 2
 _LOGGER = logging.getLogger(__name__)
 

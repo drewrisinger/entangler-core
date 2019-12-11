@@ -2,14 +2,18 @@
 import logging
 import typing
 
+import pkg_resources
 import migen
-from dynaconf import settings
+from dynaconf import LazySettings
 from gateware_utils import MockPhy
 from gateware_utils import rtio_output_event
 
 import entangler.phy
 
 _LOGGER = logging.getLogger(__name__)
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+)
 
 
 class PhyTestHarness(migen.Module):
