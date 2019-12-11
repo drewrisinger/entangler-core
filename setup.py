@@ -14,4 +14,7 @@ if __name__ == "__main__":
         url="https://github.com/drewrisinger/entangler-core",
         setup_requires=["pytest-runner"],
         tests_require=["pytest"],
+        package_data={
+            "": ["*.txt", "*.toml", "*.md"],
+        }
     )
