@@ -10,7 +10,7 @@ if __name__ == "__main__":
         name="entangler",
         version="0.1",
         packages=setuptools.find_packages(),
-        requirements=["artiq>=5", "dynaconf", "migen", "numpy"],
+        requirements=["artiq>=5", "dynaconf", "migen", "misoc", "numpy"],
         url="https://github.com/drewrisinger/entangler-core",
         setup_requires=["pytest-runner"],
         tests_require=["pytest"],

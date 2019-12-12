@@ -1,4 +1,5 @@
 artiq>=5
 dynaconf
 migen
+misoc
 numpy
