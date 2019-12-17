@@ -286,6 +286,7 @@ class EntanglerEEM(eem_mod._EEM):
 
         # add reference PHY
         if uses_reference:
+            _LOGGER.debug("Adding reference PHY")
             pads = next(dio_pins_iter)
             phy = io_class["input"](pads.p, pads.n)
             target.submodules += phy
