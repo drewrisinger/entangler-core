@@ -115,3 +115,6 @@ venv.bak/
 
 # MIGEN Simulator Waveform files
 *.vcd
+
+# ARTIQ Build outputs
+artiq_kasli/
