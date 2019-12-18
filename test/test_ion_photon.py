@@ -256,7 +256,8 @@ def test_phy_basic(ip_phy: PhyTestHarness):
         for i, ts in enumerate(timestamps):
             yield from ip_phy.read(settings.ADDRESS_READ.TIMESTAMP + i, ts)
             _LOGGER.debug("Read timestamp[%i]: %i", i, ts[0])
-            if event_times_rel_to_pump_stop[i] >= 0:
+            if 0 <= event_times_rel_to_pump_stop[i] <= photon_window_ns:
+                # valid arrival times
                 assert ts[0] == event_times_rel_to_pump_stop[i] + pump_stop_time_ns
             else:
                 assert ts[0] == 0
@@ -268,7 +269,7 @@ def test_phy_basic(ip_phy: PhyTestHarness):
         expected_time_elapsed = cyc_complete[0] * (cycle_len_coarse + 4)
         # Bound runtime to a fairly close number of cycles.
         assert (
-            (runtime - expected_time_elapsed - 10)
+            (runtime - expected_time_elapsed - 5)
             < time_remaining[0]
             < (runtime - expected_time_elapsed)
         )
@@ -280,7 +281,7 @@ def test_phy_basic(ip_phy: PhyTestHarness):
             photon_window_ns=50,
             cycles_until_timeout=40,
             herald_patterns=ION_PHOTON_HERALD_PATTERNS,
-            event_times_rel_to_pump_stop=(0, 50, -10, -30),
+            event_times_rel_to_pump_stop=(0, 50, -10, -30),  # pattern 1100
         ),
         vcd_name="ion_photon_phy.vcd",
         clocks={name: COARSE_CLOCK_PERIOD_NS for name in ["rio", "sys", "rio_phy"]},
