@@ -5,8 +5,8 @@ Note: STB = "strobe", I forgot that one.
 import logging
 import typing
 
-import pkg_resources
 import migen.build.generic_platform as platform
+import pkg_resources
 from dynaconf import LazySettings
 from migen import Cat
 from migen import FSM
@@ -535,19 +535,23 @@ class EntanglerCore(Module):
 
         assert len(input_phys) == settings.NUM_INPUT_SIGNALS  # noqa: E203
         use_reference_pulse = reference_phy is not None
-        if core_link_pads is None or len(core_link_pads) == 0:
+        if core_link_pads is None or len(core_link_pads) == 0 and not simulate:
+            # option to disable inter-entangler comm if not simulating
             _LOGGER.warning(
                 "No inter-Entangler pads provided. "
                 "Not enabling inter-Kasli communication"
             )
             core_comm_disabled = True
         else:
-            assert len(core_link_pads) >= 5 if use_reference_pulse else 4
+            assert simulate or len(core_link_pads) >= 5 if use_reference_pulse else 4
             core_comm_disabled = False
 
         num_outputs = settings.NUM_OUTPUT_CHANNELS
-        use_running_output = len(output_pads) == num_outputs + 1
-        assert len(output_pads) in (num_outputs, num_outputs + 1)
+        if simulate:
+            use_running_output = False
+        else:
+            use_running_output = len(output_pads) == num_outputs + 1
+            assert len(output_pads) in (num_outputs, num_outputs + 1)
 
         self.submodules.msm = MainStateMachine()
 
@@ -606,7 +610,9 @@ class EntanglerCore(Module):
             # running, or controlled by the passthrough signal when the core is
             # not running.
             if use_running_output:
-                _LOGGER.info("Using a 'RUNNING?' output, assigned to %s", output_pads[-1])
+                _LOGGER.info(
+                    "Using a 'RUNNING?' output, assigned to %s", output_pads[-1]
+                )
                 self.specials += Instance(
                     "OBUFDS",
                     i_I=Mux(self.msm.running, 1, passthrough_sigs[4]),
