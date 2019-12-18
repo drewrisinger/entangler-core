@@ -277,25 +277,3 @@ class Entangler:
         the detected rising edge.
         """
         return self.read(channel)
-
-    @kernel
-    def get_pattern(self) -> TInt32:
-        """Return the pattern that was matched by the entangler.
-
-        NOTE: no pattern match will return as ``0x0``.
-        This pattern reading is slow, and is overwritten as soon as the entangler
-        is started. So make sure to call this function as soon as the entangler finishes
-        to get the best/correct results.
-
-        Can fail if the timestamp for a channel is 0 (i.e. if it occurs concurrently
-        with reference (if using a reference), or at cycle time = 0 if your window
-        starts at 0. This behavior is guarded against in Ion-Photon version
-        by disallowing windows beginning at < 8 mu).
-        """
-        pattern = 0
-        # TODO: check that pattern ordering is same as pattern write
-        for chan in range(TimingChannels.gate_apd3, TimingChannels.gate_apd0, -1):
-            chan_triggered = 1 if self.get_timestamp_mu(chan) > 0 else 0
-            pattern = (pattern << 1) | chan_triggered
-
-        return pattern
