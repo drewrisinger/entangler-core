@@ -1,5 +1,10 @@
 # Entangler Gateware Notes
 
+## Running tests
+
+Each test can be run individually (with python PATH/TO/TEST.py), or all together using ``pytest``.
+To run most tests (~3 min runtime) without running SUPER SLOW tests, run ``pytest -m "not slow"``.
+
 ## Pin Configuration Notes
 
 ### Master Entangler -> Slave Entangler Communication

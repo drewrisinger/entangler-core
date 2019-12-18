@@ -1,4 +1,5 @@
 """Test the entangler state machine logic in :class`entangler.core.MainStateMachine`."""
+import pytest
 from migen import Module
 from migen import run_simulation
 
@@ -150,6 +151,34 @@ def msm_pair_test(dut: MsmPair):
 
     # Time out without success, master timing out first
     yield from run(t_start_master=10, t_start_slave=60, t_herald=None)
+
+
+@pytest.fixture
+def msm_standalone() -> MainStateMachine:
+    """Create a single StateMachine for sim."""
+    return MainStateMachine()
+
+
+@pytest.fixture
+def msm_pair() -> MsmPair:
+    """Create two paired StateMachines for sim."""
+    return MsmPair()
+
+
+def test_msm_standalone(request, msm_standalone):
+    """Test the standalone StateMachine."""
+    run_simulation(
+        msm_standalone,
+        msm_standalone_test(msm_standalone),
+        vcd_name=(request.node.name + ".vcd"),
+    )
+
+
+def test_msm_pair(request, msm_pair):
+    """Test communication between a StateMachine pair."""
+    run_simulation(
+        msm_pair, msm_pair_test(msm_pair), vcd_name=(request.node.name + ".vcd")
+    )
 
 
 if __name__ == "__main__":

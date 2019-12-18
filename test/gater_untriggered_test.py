@@ -1,10 +1,12 @@
 """Test the :class:`entangler.core.UntriggeredInputGater` registers input events."""
+import functools
 import itertools
 import logging
 import os
 import sys
 
 import pkg_resources
+import pytest
 from dynaconf import LazySettings
 from migen import If
 from migen import Module
@@ -23,6 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(
     ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
 )
+
 
 class UntriggeredGaterHarness(Module):
     """Test harness to wrap & pass signals to a ``UntriggeredInputGater``."""
@@ -79,7 +82,7 @@ def gater_test(
         yield
 
         triggered = (yield dut.gater.triggered) == 1
-        sig_ts = (yield dut.gater.sig_ts)
+        sig_ts = yield dut.gater.sig_ts
         current_time = (yield dut.m) * 8
         clear_signal = (yield dut.gater.clear) == 1
 
@@ -155,6 +158,27 @@ def gater_clear_test(dut: UntriggeredGaterHarness):
     for _ in range(10):
         yield
         assert (yield dut.gater.triggered) == 0
+
+
+@pytest.fixture
+def gater_dut() -> UntriggeredGaterHarness:
+    """Create an UntriggeredInputGater for simulation."""
+    return UntriggeredGaterHarness()
+
+
+@pytest.mark.parametrize(
+    "test_function",
+    [
+        gater_clear_test,
+        gater_invalid_window_test,
+        functools.partial(gater_test, gate_start=20, gate_stop=30, t_sig=25),
+    ],
+)
+def test_untriggered_gater(request, gater_dut: UntriggeredGaterHarness, test_function):
+    """Test an untriggered gater with various test functions."""
+    run_simulation(
+        gater_dut, test_function(gater_dut), vcd_name=(request.node.name + ".vcd")
+    )
 
 
 if __name__ == "__main__":

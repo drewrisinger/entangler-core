@@ -3,6 +3,7 @@ import os
 import sys
 
 import pkg_resources
+import pytest
 from dynaconf import LazySettings
 from migen import If
 from migen import Module
@@ -64,8 +65,8 @@ def gater_test(dut, gate_start: int, gate_stop: int, t_ref: int, t_sig: int):
         current_time = (yield dut.m) * 8
         # time_since_ref = current_time - t_ref
 
-        ref_ts = (yield dut.core.ref_ts)
-        sig_ts = (yield dut.core.sig_ts)
+        ref_ts = yield dut.core.ref_ts
+        sig_ts = yield dut.core.sig_ts
         dt = t_sig - t_ref
         signal_in_window = gate_start <= dt <= gate_stop
         signal_occurred = current_time > t_sig
@@ -79,6 +80,31 @@ def gater_test(dut, gate_start: int, gate_stop: int, t_ref: int, t_sig: int):
             assert sig_ts == t_sig
 
     print(triggered, ref_ts, sig_ts)
+
+
+@pytest.fixture
+def gater_dut() -> TriggeredGaterHarness:
+    """Create a TriggeredInputGater for sim."""
+    return TriggeredGaterHarness()
+
+
+# @pytest.mark.parametrize("gate_start,gate_stop,t_ref,t_sig", (20, 30, 20, 41))
+@pytest.mark.parametrize("gate_start,gate_stop,t_ref", [(8, 25, 20), (20, 30, 20)])
+@pytest.mark.parametrize("t_sig", range(20, 20 + 25 + 10))
+def test_triggered_gater(
+    request,
+    gater_dut: TriggeredGaterHarness,
+    gate_start: int,
+    gate_stop: int,
+    t_ref: int,
+    t_sig: int,
+):
+    """Test the TriggeredInputGater by scanning signal through its gating window."""
+    run_simulation(
+        gater_dut,
+        gater_test(gater_dut, gate_start, gate_stop, t_ref, t_sig),
+        vcd_name=(request.node.name + ".vcd"),
+    )
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import os
 import sys
 
 import pkg_resources
+import pytest
 from dynaconf import LazySettings
 from migen import run_simulation  # noqa: E402
 
@@ -21,7 +22,7 @@ settings = LazySettings(
 )
 
 
-def test_basic(dut: PhyTestHarness):
+def basic_phy_check(dut: PhyTestHarness):
     """Test the entire :mod:`entangler` gateware basic functionality works."""
     yield dut.phy_ref.t_event.eq(1000)
     yield dut.phy_apd0.t_event.eq(1000)
@@ -65,7 +66,7 @@ def test_basic(dut: PhyTestHarness):
     yield from advance_clock(5)
 
 
-def test_timeout(dut: PhyTestHarness):
+def check_phy_timeout(dut: PhyTestHarness):
     """Test that :mod:`entangler` timeout works.
 
     Sweeps the timeout to occur at all possible points in the state machine operation.
@@ -97,12 +98,29 @@ def test_timeout(dut: PhyTestHarness):
         yield from do_timeout(i, n_cycles=10)
 
 
+@pytest.fixture
+def phy_dut() -> PhyTestHarness:
+    """Create an EntanglerPHY test harness for sim."""
+    return PhyTestHarness()
+
+
+@pytest.mark.parametrize("test_function", [basic_phy_check, check_phy_timeout],)
+def test_phy_func(request, phy_dut: PhyTestHarness, test_function):
+    """Run test functions on an Entangler PHY."""
+    run_simulation(
+        phy_dut,
+        test_function(phy_dut),
+        vcd_name=(request.node.name + ".vcd"),
+        clocks={"sys": 8, "rio": 8, "rio_phy": 8},
+    )
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     dut = PhyTestHarness()
     run_simulation(
         dut,
-        test_basic(dut),
+        basic_phy_check(dut),
         vcd_name="phy.vcd",
         clocks={"sys": 8, "rio": 8, "rio_phy": 8},
     )
@@ -110,7 +128,7 @@ if __name__ == "__main__":
     dut = PhyTestHarness()
     run_simulation(
         dut,
-        test_timeout(dut),
+        check_phy_timeout(dut),
         vcd_name="phy_timeout.vcd",
         clocks={"sys": 8, "rio": 8, "rio_phy": 8},
     )

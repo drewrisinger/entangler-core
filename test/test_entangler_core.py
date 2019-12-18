@@ -5,13 +5,14 @@ import os
 import sys
 import typing
 
+import pkg_resources
+import pytest
+from dynaconf import LazySettings
+from migen import run_simulation
+
 # add gateware simulation tools "module" (at ./helpers/*)
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 
-
-import pkg_resources
-from dynaconf import LazySettings  # noqa: E402
-from migen import run_simulation  # noqa: E402
 
 # pylint: disable=import-error
 from coretester import CoreTestHarness  # noqa: E402
@@ -157,6 +158,34 @@ def standalone_test_parametrized(
             )
             raise err
         assert (yield dut.core.msm.cycles_completed) == failed_cycles + 1
+
+
+@pytest.fixture
+def core_dut() -> CoreTestHarness:
+    """Create an EntanglerCore test harness."""
+    return CoreTestHarness(use_reference=True)
+
+
+@pytest.mark.parametrize(
+    "test_function",
+    [
+        standalone_test,
+        functools.partial(
+            standalone_test_parametrized, cycle_length=20, failed_cycles=3
+        ),
+        pytest.param(
+            functools.partial(
+                standalone_test_parametrized, cycle_length=50, failed_cycles=3
+            ),
+            marks=pytest.mark.slow,
+        ),
+    ],
+)
+def test_entangler_core(request, core_dut, test_function):
+    """Runs test functions on EntanglerCore."""
+    run_simulation(
+        core_dut, test_function(core_dut), vcd_name=(request.node.name + ".vcd")
+    )
 
 
 if __name__ == "__main__":

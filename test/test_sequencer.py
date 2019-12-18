@@ -1,4 +1,5 @@
 """Test the output event scheduler :class:`entangler.core.ChannelSequencer`."""
+import pytest
 from migen import Module
 from migen import run_simulation
 from migen import Signal
@@ -15,8 +16,10 @@ class ChannelSequencerHarness(Module):
         self.submodules.core = ChannelSequencer(self.m)
 
 
-def channel_sequencer_test(dut):
+def check_sequencer_timing(dut):
     """Test the outputs of a :class:`ChannelSequencer`."""
+    start_time = 10
+    stop_time = 30
     yield dut.core.clear.eq(1)
     yield dut.core.m_start.eq(10)
     yield dut.core.m_stop.eq(30)
@@ -27,18 +30,34 @@ def channel_sequencer_test(dut):
         yield dut.m.eq(i)
         yield
 
-        if i == 10:
-            assert (yield dut.core.stb_start) == 1
+        # Check strobes on proper times
+        assert bool((yield dut.core.stb_start)) == (i == start_time)
+        assert bool((yield dut.core.stb_stop)) == (i == stop_time)
+
+        # check output values
+        if i <= start_time:
             assert (yield dut.core.output) == 0
-        if i == 11:
+        if start_time < i <= stop_time:
             assert (yield dut.core.output) == 1
-        if i == 30:
-            assert (yield dut.core.stb_stop) == 1
-            assert (yield dut.core.output) == 1
-        if i == 31:
+        if i > stop_time:
             assert (yield dut.core.output) == 0
+
+
+@pytest.fixture
+def sequencer_dut() -> ChannelSequencerHarness:
+    """Create a ChannelSequencer for sim."""
+    return ChannelSequencerHarness()
+
+
+def test_channel_sequencer(request, sequencer_dut: ChannelSequencer):
+    """Test the timing output of a ChannelSequencer."""
+    run_simulation(
+        sequencer_dut,
+        check_sequencer_timing(sequencer_dut),
+        vcd_name=(request.node.name + ".vcd"),
+    )
 
 
 if __name__ == "__main__":
     dut = ChannelSequencerHarness()
-    run_simulation(dut, channel_sequencer_test(dut), vcd_name="sequencer.vcd")
+    run_simulation(dut, check_sequencer_timing(dut), vcd_name="sequencer.vcd")
