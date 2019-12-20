@@ -3,8 +3,6 @@
 NOTE: requires ARTIQ >= 5, for the
 :func:`artiq.coredevice.rtio.rtio_input_timestamped_data` RUST syscall.
 """
-import enum
-
 import numpy as np
 import pkg_resources
 from artiq.coredevice.rtio import rtio_input_data
@@ -20,37 +18,18 @@ settings = LazySettings(
     ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
 )
 
-# TODO: remove these
-class TimingChannels(enum.IntEnum):
-    """Timing flags/addresses for the Input/Output channels in an :class:`Entangler`."""
-
-    # TODO: generate based on settings.NUM_INPUT_SIGNALS & settings.NUM_OUTPUT_CHANNELS
-    sequencer_422sigma = 0b1000 + 0
-    sequencer_1092 = 0b1000 + 1
-    sequencer_422ps_trigger = 0b1000 + 2
-    sequencer_aux = 0b1000 + 3
-    gate_apd0 = 0b1000 + 4
-    gate_apd1 = 0b1000 + 5
-    gate_apd2 = 0b1000 + 6
-    gate_apd3 = 0b1000 + 7
-
-
-# Read only
-timestamp_apd0 = 0b11000 + 0
-timestamp_apd1 = 0b11000 + 1
-timestamp_apd2 = 0b11000 + 2
-timestamp_apd3 = 0b11000 + 3
-timestamp_422ps = 0b11000 + 4
-
 
 class Entangler:
     """Sequences remote entanglement experiments between a master and a slave."""
 
+    # label internal variables as constant to optimize compilation.
     kernel_invariants = {
         "core",
         "channel",
         "is_master",
         "ref_period_mu",
+        "num_inputs",
+        "num_outputs",
         "_SEQUENCER_TIME_MASK",
         "_ADDRESS_WRITE",
         "_ADDRESS_READ",
@@ -73,6 +52,8 @@ class Entangler:
         self.channel = channel
         self.is_master = is_master
         self.ref_period_mu = self.core.seconds_to_mu(self.core.coarse_ref_period)
+        self.num_outputs = settings.NUM_OUTPUT_CHANNELS
+        self.num_inputs = settings.NUM_INPUT_SIGNALS
         self._SEQUENCER_TIME_MASK = (1 << settings.FULL_COUNTER_WIDTH) - 1
         self._ADDRESS_WRITE = settings.ADDRESS_WRITE
         self._ADDRESS_READ = settings.ADDRESS_READ
@@ -136,30 +117,52 @@ class Entangler:
 
     @kernel
     def set_timing_mu(self, channel: TInt32, t_start_mu: TInt32, t_stop_mu: TInt32):
-        """Set the output channel timing and relative gate times.
+        """Set the output channel timing and input gate times.
+
+        ``t_start_mu`` and ``t_start_mu`` define a window.
+        For an output, this window is when the output signal is HIGH (Logic 1).
+        For an input, this window is when the Entangler can register an input pulse
+        (positive edge triggered).
 
         Times are in machine units.
         For output channels the timing resolution is the coarse clock (8ns), and
         the times are relative to the start of the entanglement cycle.
-        For gate channels the time is relative to the reference pulse (422
-        pulse input) and has fine timing resolution (1ns).
+        For gate channels, if you are using a reference pulse then the time is
+        relative to the reference pulse (422 pulse input).
+        Otherwise it is relative to the cycle start (IonPhoton).
+        Input gating has fine timing resolution (1ns).
 
-        The start / stop times can be between 0 and the cycle length.
-        (i.e for a cycle length of 100*8ns, stop can be at most 100*8ns)
-        If the stop time is after the cycle length, the pulse stops at the cycle
-        length. If the stop is before the start, the pulse stops at the cycle
-        length. If the start is after the cycle length there is no pulse.
+        The start / stop times can be between 0 and the cycle length
+        (i.e for a cycle length of 100*8ns, stop can be at most 100*8ns).
+        (in mu, 100*8ns is typically 800).
+        If the stop time is after the cycle length, the pulse stops at the cycle length.
+        TODO: check following is still valid.
+        If the stop is before the start, the pulse stops at the cycle length.
+        If the start is after the cycle length there is no pulse.
+
+        Channels are numbered (0, num_outputs, num_inputs + num_outputs),
+        where the # of I/O is defined in settings.toml. That is, the outputs come first,
+        and then the inputs. So to find the channel number for input #2 (0-indexed):
+        ``in2chan = driver.num_outputs + 2``.
+        Likewise, input #0: ``in0chan = driver.num_outputs + 0``.
+
+        Note that changing the number of inputs/outputs requires re-compiling the
+        gateware for the Kasli/Entangler.
         """
-        if channel < TimingChannels.gate_apd0:
+        if channel < self.num_outputs:
+            # remove the fine timestamp from outputs
             t_start_mu = t_start_mu >> 3
             t_stop_mu = t_stop_mu >> 3
 
+        # TODO: don't know why add 1...
         t_start_mu += 1
         t_stop_mu += 1
 
         # Truncate to settings.FULL_COUNTER_WIDTH.
         t_start_mu &= self._SEQUENCER_TIME_MASK
         t_stop_mu &= self._SEQUENCER_TIME_MASK
+        # Convert to channel write address
+        channel = self._ADDRESS_WRITE.TIMING + channel
         self.write(channel, (t_stop_mu << 16) | t_start_mu)
 
     @kernel
@@ -271,9 +274,12 @@ class Entangler:
 
     @kernel
     def get_timestamp_mu(self, channel):
-        """Get the input timestamp for a channel.
+        """Get the input timestamp for an input channel.
+
+        Channels are numbered from (0, settings.NUM_INPUT_SIGNALS)
+        (add 1 if using a reference).
 
         The timestamp is the time offset, in mu, from the start of the cycle to
         the detected rising edge.
         """
-        return self.read(channel)
+        return self.read(self._ADDRESS_READ.TIMESTAMP + channel)
