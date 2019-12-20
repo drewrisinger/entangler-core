@@ -34,7 +34,7 @@ def ip_core() -> CoreTestHarness:
     return CoreTestHarness(use_reference=False)
 
 
-def test_core_basic(ip_core: CoreTestHarness):
+def test_core_basic(request, ip_core: CoreTestHarness):
     """Test basic IonPhoton experiment.
 
     Not parametrized or fancy, just runs several unsuccessful experiments and
@@ -107,7 +107,7 @@ def test_core_basic(ip_core: CoreTestHarness):
     migen.run_simulation(
         ip_core,
         basic_core_function(),
-        vcd_name="ion_photon_core.vcd",
+        vcd_name=(request.node.name + ".vcd"),
         clocks={"sys": COARSE_CLOCK_PERIOD_NS},
     )
 
@@ -118,7 +118,7 @@ def ip_phy() -> PhyTestHarness:
     return PhyTestHarness(use_ref=False)
 
 
-def test_phy_basic(ip_phy: PhyTestHarness):
+def test_phy_basic(request, ip_phy: PhyTestHarness):
     """Perform a basic test on the Ion-Photon Entangler PHY."""
     _LOGGER.info("Starting basic IonPhoton EntanglerPHY functional test")
 
@@ -298,6 +298,6 @@ def test_phy_basic(ip_phy: PhyTestHarness):
             herald_patterns=ION_PHOTON_HERALD_PATTERNS,
             event_times_rel_to_pump_stop=(0, 50, -10, -30),  # pattern 1100
         ),
-        vcd_name="ion_photon_phy.vcd",
+        vcd_name=(request.node.name + ".vcd"),
         clocks={name: COARSE_CLOCK_PERIOD_NS for name in ("rio", "sys", "rio_phy")},
     )
