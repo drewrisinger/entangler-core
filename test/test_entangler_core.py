@@ -181,8 +181,8 @@ def core_dut() -> CoreTestHarness:
         ),
     ],
 )
-def test_entangler_core(request, core_dut, test_function):
-    """Runs test functions on EntanglerCore."""
+def test_entangler_core(request, core_dut: CoreTestHarness, test_function):
+    """Runs test functions on :class:`EntanglerCore`."""
     run_simulation(
         core_dut, test_function(core_dut), vcd_name=(request.node.name + ".vcd")
     )
