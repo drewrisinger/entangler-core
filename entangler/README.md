@@ -5,6 +5,35 @@
 Each test can be run individually (with python PATH/TO/TEST.py), or all together using ``pytest``.
 To run most tests (~3 min runtime) without running SUPER SLOW tests, run ``pytest -m "not slow"``.
 
+## Building FPGA Gateware
+
+The Entangler requires an FPGA to include it in its gateware before it can do anything.
+To accomplish this, we inserted our module into the ARTIQ build process.
+You can build the ARTIQ gateware including Entangler by using [kasli_generic.py](./kasli_generic.py).
+
+You simply start a Nix shell ``nix-shell ./nix/entangler-shell-dev.nix``, and then run
+``python -m entangler.kasli_generic PATH/TO/KASLI_DESCRIPTION.json``.
+
+### Device Database Entry
+
+To use the Entangler in your experiment code, you need to add it to the device database
+``device_db.py``. You must find the RTIO channel for the ``Entangler`` (check the build log),
+and fill that in the appropriate spot below:
+
+    ```python
+    "entangler": {
+        "type": "local",
+        "module": "entangler.driver",
+        "class": "Entangler",
+        "arguments": {"channel": YOUR_CHANNEL_HERE, "is_master": True},
+    },
+    ```
+
+The Input & Output TTL channels are still accessible as normal, and will need their own
+device database entries.
+
+See below for more example code
+
 ## Pin Configuration Notes
 
 ### Master Entangler -> Slave Entangler Communication
