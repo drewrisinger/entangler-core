@@ -52,13 +52,18 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
         num_inputs += 1
 
     num_eem = len(peripheral["ports"]) + len(peripheral.get("link_eem", list()))
+    if peripheral.get("link_eem", None) is not None:
+        # Using inter-Kasli/Entangler communication
+        num_link_pins = 5 if using_ref else 4
+    else:
+        num_link_pins = 0
 
-    if (num_eem * 8 - 5) < num_inputs + num_outputs:
+    if (num_eem * 8) < num_inputs + num_outputs + num_link_pins:
         _LOGGER.warning(
             "Maybe insufficient number of I/O EEM boards. "
             "Must use Interface to get sufficient number, or another DIO EEM. "
             "Expecting %i total I/O",
-            num_inputs + num_outputs,
+            num_inputs + num_outputs + num_link_pins,
         )
     _LOGGER.info("Adding entangler to Kasli. Params: %s", peripheral)
     EntanglerEEM.add_std(
