@@ -227,7 +227,7 @@ class EntanglerEEM(eem_mod._EEM):
 
         io_class = {
             "input": ttl_serdes_7series.Input_8X,
-            "output": ttl_serdes_7series.Output_8X,
+            "output": ttl_simple.Output,
         }
         num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
         num_inputs = entangler_settings.NUM_INPUT_SIGNALS
