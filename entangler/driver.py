@@ -169,7 +169,7 @@ class Entangler:
     def set_timing(self, channel, t_start, t_stop):
         """Set the output channel timing and relative gate times.
 
-        Times are in seconds. See set_timing_mu() for details.
+        Times are in seconds. See :meth:`set_timing_mu` for details.
         """
         t_start_mu = np.int32(self.core.seconds_to_mu(t_start))
         t_stop_mu = np.int32(self.core.seconds_to_mu(t_stop))
@@ -213,10 +213,10 @@ class Entangler:
         self.write(self._ADDRESS_WRITE.HERALD, data)
 
     @kernel
-    def run_mu(self, duration_mu):
+    def run_mu(self, duration_mu: TInt32):
         """Run the entanglement sequence until success, or duration_mu has elapsed.
 
-        THIS IS A BLOCKING CALL.
+        NOTE: THIS IS A BLOCKING CALL (eats all slack).
 
         Args:
             duration_mu (int): Timeout duration of this entanglement cycle, in mu.
@@ -238,8 +238,8 @@ class Entangler:
     def run(self, duration):
         """Run the entanglement sequence.
 
-        See run_mu() for details. NOTE: this is a blocking call.
-        Duration is in seconds.
+        See :meth:`run_mu` for details. NOTE: this is a blocking call (eats all slack).
+        Duration is in seconds, max of about 4 seconds.
         """
         duration_mu = np.int32(self.core.seconds_to_mu(duration))
         return self.run_mu(duration_mu)
@@ -269,7 +269,11 @@ class Entangler:
 
     @kernel
     def get_time_remaining(self):
-        """Return the remaining number of clock cycles until the core times out."""
+        """Return the remaining number of clock cycles until the core times out.
+
+        NOTE: This only works as expected if the Entangler matches a pattern.
+        This cannot be used during :meth:`run` because that call blocks execution.
+        """
         return self.read(self._ADDRESS_READ.TIME_REMAINING)
 
     @kernel
