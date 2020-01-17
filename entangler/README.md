@@ -2,7 +2,7 @@
 
 ## Running tests
 
-Each test can be run individually (with python PATH/TO/TEST.py), or all together using ``pytest``.
+Each test can be run individually (with ``python PATH/TO/TEST.py``), or all together using ``pytest``.
 To run most tests (~3 min runtime) without running SUPER SLOW tests, run ``pytest -m "not slow"``.
 
 ## Building FPGA Gateware
@@ -12,7 +12,7 @@ To accomplish this, we inserted our module into the ARTIQ build process.
 You can build the ARTIQ gateware including Entangler by using [kasli_generic.py](./kasli_generic.py).
 
 You simply start a Nix shell ``nix-shell ./nix/entangler-shell-dev.nix``, and then run
-``python -m entangler.kasli_generic PATH/TO/KASLI_DESCRIPTION.json``.
+``python -m entangler.kasli_generic PATH/TO/KASLI_DESCRIPTION.json``. See [Nix README](../nix/README.md) for more info.
 
 ### Device Database Entry
 
@@ -20,14 +20,18 @@ To use the Entangler in your experiment code, you need to add it to the device d
 ``device_db.py``. You must find the RTIO channel for the ``Entangler`` (check the build log),
 and fill that in the appropriate spot below:
 
-    ```python
+```python
+# In device_db.py:
+{
+    ...
     "entangler": {
         "type": "local",
         "module": "entangler.driver",
         "class": "Entangler",
         "arguments": {"channel": YOUR_CHANNEL_HERE, "is_master": True},
     },
-    ```
+}
+```
 
 The Input & Output TTL channels are still accessible as normal, and will need their own
 device database entries.
@@ -52,30 +56,32 @@ To do this:
         NOTE: the is_master flag is set on driver instantiation, so you can change
         this between ARTIQ experiments but probably not within the same experiment.
         An example sequence:
-        ```python
-        # In device_db.py:
-        {
-            "entangler_device_master": {
-                "type": "local",
-                "module": "entangler.driver",
-                "class": "Entangler",
-                "arguments": {
-                    "channel": ENTANGLER_RTIO_CHANNEL,
-                    "is_master": True,  # CHANGE THIS for slave
-                },
-            },
-        }
-        ```
-        ```python
-        # in user/experiment code
-        @host_only
-        def build():
-            self.setattr_device("entangler_device_master")
 
-        @kernel
-        def prep_entangler()
-            self.entangler_device_master.init()
-        ```
+```python
+# In device_db.py:
+{
+    "entangler_device_master": {
+        "type": "local",
+        "module": "entangler.driver",
+        "class": "Entangler",
+        "arguments": {
+            "channel": ENTANGLER_RTIO_CHANNEL,
+            "is_master": True,  # CHANGE THIS for slave
+        },
+    },
+}
+
+# in user/experiment code
+@host_only
+def build():
+    self.setattr_device("entangler_device_master")
+    self.setattr_device("entangler_device_slave")
+
+@kernel
+def prep_entangler()
+    self.entangler_device_master.init()
+    self.entangler_device_slave.init()
+```
 
 The synchronization pins are used as follows (in order they must be input into the Gateware builder):
     1. (Slave -> Master) Ready: if ready to start the next entanglement cycle
@@ -119,10 +125,10 @@ The register address field is variable length.
 It depends ONLY on the total number of I/O channels you are controlling,
 The length is:
 
-    ```python
-    channel_bits = ceil(log2(num_inputs + num_outputs))
-    address_length = 2 + channel_bits
-    ```
+```python
+channel_bits = ceil(log2(num_inputs + num_outputs))
+address_length = 2 + channel_bits
+```
 
 Let's call the variable part of the previous expression ``channel_bits``
 The layout of the register address is (MSB on left):
@@ -146,7 +152,7 @@ When defining bits below, let ``H`` be NUM_PATTERNS (heralds), ``I`` be NUM_INPU
 (set in [settings.toml](../settings.toml)).
 
 | Function  | Other field value | Data field   |
-| --------- | ----------------- | ------------- |
+| --------- | ----------------- | ------------ |
 | Config    | X'd0              | From MSB->LSB: [standalone, is_master, enable]. Set if master or slave, set if core enabled (i.e. un-tris master / slave outputs, override output phys) |
 | Run       | X'd1              | Trigger the entanglement sequence. Data consists of Max time (in coarse units) to run for (i.e. timeout). |
 | Cycle Len | X'd2              | Length of cycle (1 attempt) in coarse clock units (8 ns). Divide desired time (in ns) by 8 (or RSHIFT(3)) to get this value. |
@@ -160,6 +166,8 @@ Input/Output Channels defined in [settings.toml](../settings.toml).
 The general concept is that writing them sets the functionality of the state machine,
 while reading them checks the status of the state machine after generating entanglement.
 
+##### Address Format
+
 The Registers are arranged in order of (output, input), which means that the absolute
 index of setting a timing register depends on the number of inputs & outputs.
 
@@ -169,6 +177,8 @@ The remainder of the address bits are which timing channel should be written.
 
 **Example**: 4 inputs, 4 outputs. To write to output0, address should be ``5'b01000``.
 To write to input0, address should be ``5'd01100`` (i.e. output0 address + 4 (# of outputs)).
+
+##### Data Format
 
 The timing data that you send depends on whether you are controlling an input or an output.
 If you are controlling an output, you are sending the start and stop times of the output
@@ -188,6 +198,7 @@ The smallest start/stop time valid for output events is 1 (0 makes the output st
 To read the status registers, you must set ``control=2'd0``.
 
 | Function  | Other field value | Data field   |
+| --------- | ----------------- | ------------ |
 | Status    | X'd0              | Returns 1 if the core is running. |
 | NCycles   | X'd1              | How many cycles have been completed in this run? (14 bits, will roll over if too many cycles) |
 | Time Remaining | X'd2         | How much time is remaining before timeout (in coarse cycles). This will continue decreasing after success. |
