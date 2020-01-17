@@ -13,14 +13,18 @@ You can apply patches with ``$ git apply PATCH_FILE``.
 import logging
 import typing
 
+import artiq.gateware.eem as eem_mod
 import artiq.gateware.rtio as rtio
+import artiq.gateware.targets.kasli_generic as kasligen
 import pkg_resources
+from artiq.gateware.rtio.phy import ttl_serdes_7series
+from artiq.gateware.rtio.phy import ttl_simple
 from dynaconf import LazySettings
 from migen import Signal
-from migen.build.generic_platform import Pins, Subsignal, IOStandard, ConstraintError
-import artiq.gateware.eem as eem_mod
-from artiq.gateware.rtio.phy import ttl_simple, ttl_serdes_7series
-import artiq.gateware.targets.kasli_generic as kasligen
+from migen.build.generic_platform import ConstraintError
+from migen.build.generic_platform import IOStandard
+from migen.build.generic_platform import Pins
+from migen.build.generic_platform import Subsignal
 
 import entangler.phy
 
@@ -79,6 +83,7 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
 kasligen.peripheral_processors["entangler"] = peripheral_entangler
 
 
+# pylint: disable=protected-access
 class EntanglerEEM(eem_mod._EEM):
     """Define the pins and gateware/logic used by the Entangler.
 
@@ -148,6 +153,7 @@ class EntanglerEEM(eem_mod._EEM):
                 num_interface_pads,
                 pad_range,
             )
+            # pylint: disable=protected-access
             if_io = [
                 (
                     "if{}".format(eem_interface),
@@ -165,8 +171,14 @@ class EntanglerEEM(eem_mod._EEM):
                         (
                             "dio{}".format(eem_interface),
                             i,
-                            Subsignal("p", Pins(eem_mod._eem_pin(eem, real_pin, "p"))),
-                            Subsignal("n", Pins(eem_mod._eem_pin(eem, real_pin, "n"))),
+                            Subsignal(
+                                "p",
+                                Pins(eem_mod._eem_pin(eem_interface, real_pin, "p")),
+                            ),
+                            Subsignal(
+                                "n",
+                                Pins(eem_mod._eem_pin(eem_interface, real_pin, "n")),
+                            ),
                             IOStandard(iostandard),
                         )
                         for i, real_pin in enumerate(dio_range)
@@ -180,7 +192,7 @@ class EntanglerEEM(eem_mod._EEM):
     @classmethod
     def add_std(
         cls,
-        target: "MiniSoC",
+        target: "MiniSoC",  # noqa: F821
         eem_dio: typing.Sequence[int],
         eem_interface: typing.Optional[int] = None,
         uses_reference: bool = False,
