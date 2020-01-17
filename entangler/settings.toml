@@ -1,15 +1,14 @@
 # Configuration settings for the Entangler gateware.
 # Allows configuring the counter widths, number of inputs & outputs, etc.
 
+# I believe these can be overwritten by setting the same-named environment variable,
+# if you cannot modify this file for some reason.
+
 [development]
-# Width of sequence duration counters and the coarse part of input timestamps
-# (units of clock cycles).
-COARSE_COUNTER_WIDTH = 11
-# COUNTER_WIDTH + fine_timestamp_width = 11 + 3 = 14
-# Limited in various places to be <= 16 bits, probably don't do more than that.
-FULL_COUNTER_WIDTH = 14
-MAX_CYCLES_PER_RUN = 16383  # 14 bits
-MAX_TRIGGER_COUNTS = 16383  # 14 bits
+# NOTE: if you change these, you will probably need to change the following addresses (see ./README.md)
+NUM_INPUT_SIGNALS = 4
+NUM_OUTPUT_CHANNELS = 12
+NUM_PATTERNS_ALLOWED = 4
 
 ADDRESS_WRITE__CONFIG = 0
 ADDRESS_WRITE__RUN = 1
@@ -17,7 +16,7 @@ ADDRESS_WRITE__TCYCLE = 2
 ADDRESS_WRITE__HERALD = 3
 # NOTE: Timing & all read registers depend on NUM_INPUT_SIGNALS & NUM_OUTPUT_CHANNELS
 # The lowest log2(input + output) bits are reserved for setting/reading I/O channels,
-# So at those increase then they need more bits. See README.md for more details.
+# So as those increase then they need more bits. See ./README.md for more details.
 # You can confirm that your settings work by running ``pytest ..\test\test_ion_photon.py``
 ADDRESS_WRITE__TIMING = 16   # 0b10000/0x10
 
@@ -27,6 +26,12 @@ ADDRESS_READ__TIME_REMAINING = 34   # 0x22
 ADDRESS_READ__NTRIGGERS = 35    # 0x23
 ADDRESS_READ__TIMESTAMP = 48    # 0x30
 
-NUM_INPUT_SIGNALS = 4
-NUM_OUTPUT_CHANNELS = 12
-NUM_PATTERNS_ALLOWED = 4
+# These ones probably shouldn't need to be changed, but leaving it here just in case
+# Width of sequence duration counters and the coarse part of input timestamps
+# (units of clock cycles).
+COARSE_COUNTER_WIDTH = 11
+# COUNTER_WIDTH + fine_timestamp_width = 11 + 3 = 14
+# Limited in various places to be <= 16 bits, probably don't do more than that.
+FULL_COUNTER_WIDTH = 14
+MAX_CYCLES_PER_RUN = 16383  # 14 bits
+MAX_TRIGGER_COUNTS = 16383  # 14 bits
