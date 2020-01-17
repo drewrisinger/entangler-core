@@ -1,0 +1,18 @@
+{
+    "target": "kasli",
+    "variant": "entangler_example",
+    "hw_rev": "v1.1",
+    "base": "standalone",
+    "core_addr": "192.168.78.185",
+    "rtio_frequency": 125e6,
+    "peripherals": [
+        {
+            "type": "entangler",
+            "ports": [
+                0,
+                1
+            ],
+            "uses_reference": false
+        }
+    ]
+}
