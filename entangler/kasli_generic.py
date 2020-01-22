@@ -16,7 +16,6 @@ import typing
 import artiq.gateware.eem as eem_mod
 import artiq.gateware.rtio as rtio
 import artiq.gateware.targets.kasli_generic as kasligen
-import pkg_resources
 from artiq.gateware.rtio.phy import ttl_serdes_7series
 from artiq.gateware.rtio.phy import ttl_simple
 from dynaconf import LazySettings
@@ -29,9 +28,7 @@ from migen.build.generic_platform import Subsignal
 import entangler.phy
 
 _LOGGER = logging.getLogger(__name__)
-entangler_settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
-)
+entangler_settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
 
 
 def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
@@ -237,10 +234,7 @@ class EntanglerEEM(eem_mod._EEM):
             interface_on_lower=interface_on_lower,
         )
 
-        io_class = {
-            "input": ttl_serdes_7series.Input_8X,
-            "output": ttl_simple.Output,
-        }
+        io_class = {"input": ttl_serdes_7series.Input_8X, "output": ttl_simple.Output}
         num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
         num_inputs = entangler_settings.NUM_INPUT_SIGNALS
         if uses_reference:

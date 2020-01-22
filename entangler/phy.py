@@ -3,7 +3,6 @@ import logging
 import math
 import typing
 
-import pkg_resources
 from artiq.gateware.rtio import rtlink
 from dynaconf import LazySettings
 from migen import Case
@@ -17,9 +16,7 @@ from migen import Signal
 from entangler.core import EntanglerCore
 
 _LOGGER = logging.getLogger(__name__)
-settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
-)
+settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
 # noqa: E203
 
 
