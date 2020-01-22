@@ -11,6 +11,8 @@ import pkg_resources
 import pytest
 from dynaconf import LazySettings
 
+import entangler.phy
+
 # fmt: off
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 
@@ -167,7 +169,7 @@ def test_phy_basic(request, ip_phy: PhyTestHarness):
         """
         core = ip_phy.core.core
         msm = core.msm
-        ADDR_TIMING = settings.ADDRESS_WRITE.TIMING
+        ADDR_TIMING = entangler.phy.ADDRESS_WRITE.TIMING
 
         if herald_patterns is None:
             herald_patterns = ION_PHOTON_HERALD_PATTERNS
@@ -177,7 +179,7 @@ def test_phy_basic(request, ip_phy: PhyTestHarness):
         for run in range(num_runs):
             _LOGGER.debug("Starting run %i", run + 1)
             yield from ip_phy.write(
-                settings.ADDRESS_WRITE.CONFIG, 0b110
+                entangler.phy.ADDRESS_WRITE.CONFIG, 0b110
             )  # disable, standalone
             assert not bool((yield core.enable))
             assert bool((yield msm.act_as_master))
@@ -220,18 +222,18 @@ def test_phy_basic(request, ip_phy: PhyTestHarness):
             if run == 0:
                 assert not bool((yield core.heralder.is_match))
 
-            yield from ip_phy.write(settings.ADDRESS_WRITE.CONFIG, 0b111)
+            yield from ip_phy.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b111)
             assert bool((yield core.enable))
             assert bool((yield msm.is_master))
             assert bool((yield msm.standalone))
 
             cycle_len_coarse = int(cycle_len_ns / COARSE_CLOCK_PERIOD_NS)
-            yield from ip_phy.write(settings.ADDRESS_WRITE.TCYCLE, cycle_len_coarse)
+            yield from ip_phy.write(entangler.phy.ADDRESS_WRITE.TCYCLE, cycle_len_coarse)
             assert (yield msm.cycle_length_input) == cycle_len_coarse
 
             runtime = cycle_len_coarse * cycles_until_timeout
             max_clk_per_cycle = cycle_len_coarse + 5
-            yield from ip_phy.write(settings.ADDRESS_WRITE.RUN, runtime)
+            yield from ip_phy.write(entangler.phy.ADDRESS_WRITE.RUN, runtime)
             yield from wait_until(msm.cycle_starting, max_cycles=10)
             # reset event times to 0, instead of assuming they start at 0
             yield from ip_phy.set_event_times(0, [0] * len(core.apd_gaters))
@@ -260,15 +262,15 @@ def test_phy_basic(request, ip_phy: PhyTestHarness):
             triggers = [0]
             timestamps = [[0]] * settings.NUM_INPUT_SIGNALS
 
-            yield from ip_phy.read(settings.ADDRESS_READ.TIME_REMAINING, time_remaining)
+            yield from ip_phy.read(entangler.phy.ADDRESS_READ.TIME_REMAINING, time_remaining)
             _LOGGER.debug("Time remaining: %i", time_remaining[0])
-            yield from ip_phy.read(settings.ADDRESS_READ.NCYCLES, cyc_complete)
-            yield from ip_phy.read(settings.ADDRESS_READ.STATUS, status)
+            yield from ip_phy.read(entangler.phy.ADDRESS_READ.NCYCLES, cyc_complete)
+            yield from ip_phy.read(entangler.phy.ADDRESS_READ.STATUS, status)
             _LOGGER.debug("Status: %i", status[0])
-            yield from ip_phy.read(settings.ADDRESS_READ.NTRIGGERS, triggers)
+            yield from ip_phy.read(entangler.phy.ADDRESS_READ.NTRIGGERS, triggers)
             _LOGGER.debug("Num triggers: %i", triggers[0])
             for i, ts in enumerate(timestamps):
-                yield from ip_phy.read(settings.ADDRESS_READ.TIMESTAMP + i, ts)
+                yield from ip_phy.read(entangler.phy.ADDRESS_READ.TIMESTAMP + i, ts)
                 _LOGGER.debug("Read timestamp[%i]: %i", i, ts[0])
                 if 0 <= event_times_rel_to_pump_stop[i] <= photon_window_ns:
                     # valid arrival times

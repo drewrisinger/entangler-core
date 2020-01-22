@@ -8,6 +8,8 @@ import pytest
 from dynaconf import LazySettings
 from migen import run_simulation  # noqa: E402
 
+import entangler.phy
+
 # add gateware simulation tools "module" (at ./helpers/*)
 sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
 
@@ -29,21 +31,21 @@ def basic_phy_check(dut: PhyTestHarness):
     yield dut.phy_apd1.t_event.eq(1000)
 
     yield from advance_clock(5)
-    yield from dut.write(settings.ADDRESS_WRITE.CONFIG, 0b110)  # disable, standalone
+    yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b110)  # disable, standalone
     yield from dut.write_heralds([0b0101, 0b1010, 0b1100, 0b0101])
     for i in range(settings.NUM_OUTPUT_CHANNELS):
         # set outputs to be on for 1 coarse clock cycle
         yield from dut.write(
-            settings.ADDRESS_WRITE.TIMING + i, (2 * i + 2) * (1 << 16) | 2 * i + 1
+            entangler.phy.ADDRESS_WRITE.TIMING + i, (2 * i + 2) * (1 << 16) | 2 * i + 1
         )
     # for i in [0, 2]:
-    #     yield from dut.write(settings.ADDRESS_WRITE.TIMING + 4 + i, (30 << 16) | 18)
+    #     yield from dut.write(entangler.phy.ADDRESS_WRITE.TIMING + 4 + i, (30 << 16) | 18)
     # for i in [1, 3]:
-    #     yield from dut.write(settings.ADDRESS_WRITE.TIMING + 4 + i, (1000 << 16)
+    #     yield from dut.write(entangler.phy.ADDRESS_WRITE.TIMING + 4 + i, (1000 << 16)
     #       | 1000)
-    yield from dut.write(settings.ADDRESS_WRITE.TCYCLE, 30)
-    yield from dut.write(settings.ADDRESS_WRITE.CONFIG, 0b111)  # Enable standalone
-    yield from dut.write(settings.ADDRESS_WRITE.RUN, int(2e3 / 8))
+    yield from dut.write(entangler.phy.ADDRESS_WRITE.TCYCLE, 30)
+    yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b111)  # Enable standalone
+    yield from dut.write(entangler.phy.ADDRESS_WRITE.RUN, int(2e3 / 8))
 
     yield from advance_clock(1000)
     # for i in range(1000):
@@ -75,11 +77,11 @@ def check_phy_timeout(dut: PhyTestHarness):
     def do_timeout(timeout, n_cycles=10):
         yield
         yield from dut.write(
-            settings.ADDRESS_WRITE.CONFIG, 0b110
+            entangler.phy.ADDRESS_WRITE.CONFIG, 0b110
         )  # disable, standalone
-        yield from dut.write(settings.ADDRESS_WRITE.TCYCLE, n_cycles)
-        yield from dut.write(settings.ADDRESS_WRITE.CONFIG, 0b111)  # Enable standalone
-        yield from dut.write(settings.ADDRESS_WRITE.RUN, timeout)
+        yield from dut.write(entangler.phy.ADDRESS_WRITE.TCYCLE, n_cycles)
+        yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b111)  # Enable standalone
+        yield from dut.write(entangler.phy.ADDRESS_WRITE.RUN, timeout)
 
         timedout = False
         for i in range(timeout + n_cycles + 50):

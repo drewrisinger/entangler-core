@@ -90,7 +90,7 @@ class PhyTestHarness(migen.Module):
             )
             # move herald to appropriate position in register
             data |= h << (settings.NUM_INPUT_SIGNALS * i)
-        yield from self.write(settings.ADDRESS_WRITE.HERALD, data)
+        yield from self.write(entangler.phy.ADDRESS_WRITE.HERALD, data)
 
     def set_event_times(
         self, ref_time: int, event_time_offsets: typing.Sequence[int]

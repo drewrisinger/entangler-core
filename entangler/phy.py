@@ -1,4 +1,5 @@
 """Gateware-side ARTIQ RTIO interface to the entangler core."""
+import enum
 import logging
 import math
 import typing
@@ -18,6 +19,35 @@ from entangler.core import EntanglerCore
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
 # noqa: E203
+
+# generate the PHY read/write addresses, b/c ARTIQ kernel had issues w/ referencing dynaconf settings
+def max_value_to_bit_width(max_value: int) -> int:
+    """Calculate how many bits are needed to represent an unsigned int."""
+    return math.ceil(math.log2(max_value))
+
+_num_channels = settings.NUM_INPUT_SIGNALS + settings.NUM_OUTPUT_CHANNELS
+_channel_bits = max_value_to_bit_width(_num_channels)
+_read_start = 0b1 << (_channel_bits + 1)
+
+
+class ADDRESS_WRITE(enum.IntEnum):
+    """PHY Addresses to configure the Entangler."""
+
+    CONFIG = 0
+    RUN = 1
+    TCYCLE = 2
+    HERALD = 3
+    TIMING = 0b1 << _channel_bits
+
+
+class ADDRESS_READ(enum.IntEnum):
+    """PHY Addresses to get information from the Entangler."""
+
+    STATUS = _read_start + 0
+    NCYCLES = _read_start + 1
+    TIME_REMAINING = _read_start + 2
+    NTRIGGERS = _read_start + 3
+    TIMESTAMP = 0b11 << _channel_bits
 
 
 class Entangler(Module):
@@ -59,10 +89,6 @@ class Entangler(Module):
         """
         # width of fine & coarse timestamp/timer
         FULL_COUNTER_WIDTH = settings.FULL_COUNTER_WIDTH
-
-        def max_value_to_bit_width(max_value: int) -> int:
-            """Calculate how many bits are needed to represent an unsigned int."""
-            return math.ceil(math.log2(max_value))
 
         # should eval to 14, but might change.
         PHY_DATA_INPUT_WIDTH = max(
@@ -154,20 +180,20 @@ class Entangler(Module):
                 Case(self.rtlink.o.address[0:timing_bit_width], cases),
             ),
             If(
-                (self.rtlink.o.address == settings.ADDRESS_WRITE.CONFIG)
+                (self.rtlink.o.address == ADDRESS_WRITE.CONFIG)
                 & self.rtlink.o.stb,  # noqa: W503
                 # Write config
                 self.core.enable.eq(self.rtlink.o.data[0]),
                 self.core.msm.standalone.eq(self.rtlink.o.data[2]),
             ),
             If(
-                (self.rtlink.o.address == settings.ADDRESS_WRITE.TCYCLE)
+                (self.rtlink.o.address == ADDRESS_WRITE.TCYCLE)
                 & self.rtlink.o.stb,  # noqa: W503
                 # Write cycle length
                 self.core.msm.cycle_length_input.eq(self.rtlink.o.data[:10]),
             ),
             If(
-                (self.rtlink.o.address == settings.ADDRESS_WRITE.HERALD)
+                (self.rtlink.o.address == ADDRESS_WRITE.HERALD)
                 & self.rtlink.o.stb,  # noqa: W503
                 # Write herald patterns and enables
                 *[

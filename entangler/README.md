@@ -107,17 +107,17 @@ E.g. if n_cycles=0 when the core is enabled it will saturate the ififo with time
 
 ### CAUTION
 
-All these numbers can be changed in [settings.toml](../settings.toml),
+All these numbers can be changed in [settings.toml](./settings.toml),
 but they are not all guaranteed to work 100% as expected.
 There are still some hard-coded values, like communication bus bit widths that can
 cause unexpected errors.
 This has only been extensively tested with 4 Inputs & 4 Outputs, and 4 Inputs & 12 Outputs.
-To test that your configuration works, I recommend running ``pytest ..\test\test_ion_photon.py``.
+To test that your configuration works, I recommend running ``pytest ../test/test_ion_photon.py``.
 
-**IMPORTANT:** You must change some values in [settings.toml](../settings.toml) to
-correspond to the proper register addresses. The methodology is laid out below,
-but it is your responsibility to change those values and run tests to ensure that
-they work properly.
+These addresses will be auto-generated based on the contents of [settings.toml](./settings.toml),
+and can be found in [entangler.phy](./phy.py) as ``ADDRESS_READ`` and ``ADDRESS_WRITE``.
+Though they're auto-generated, there's no guarantee that they will work.
+You can also change the number of inputs/outputs using environment variables.
 
 ### Register Address Format
 
@@ -149,7 +149,7 @@ We specify the other fields using ``X'd3``, where ``X=channel_bits`` from above.
 
 Set ``control = 2'd0``.
 When defining bits below, let ``H`` be NUM_PATTERNS (heralds), ``I`` be NUM_INPUT_SIGNALS
-(set in [settings.toml](../settings.toml)).
+(set in [settings.toml](./settings.toml)).
 
 | Function  | Other field value | Data field   |
 | --------- | ----------------- | ------------ |
@@ -161,7 +161,7 @@ When defining bits below, let ``H`` be NUM_PATTERNS (heralds), ``I`` be NUM_INPU
 #### Writing I/O Channel Registers
 
 The timing registers are special, somewhat multiplexed, and dependent on the number of
-Input/Output Channels defined in [settings.toml](../settings.toml).
+Input/Output Channels defined in [settings.toml](./settings.toml).
 
 The general concept is that writing them sets the functionality of the state machine,
 while reading them checks the status of the state machine after generating entanglement.
