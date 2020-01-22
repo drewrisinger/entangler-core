@@ -18,7 +18,6 @@ from entangler.core import EntanglerCore
 
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
-# noqa: E203
 
 # generate the PHY read/write addresses, b/c ARTIQ kernel had issues w/ referencing dynaconf settings
 def max_value_to_bit_width(max_value: int) -> int:
