@@ -28,6 +28,10 @@ in
       artiq.misoc
       pkgs.python3Packages.setuptools # setuptools needed for ``import pkg_resources`` to find settings.toml
     ];
-    doCheck = false;
+    doCheck = true;
+    checkInputs = [ pkgs.python3Packages.pytest ];
+    checkPhase = ''
+      pytest -m 'not slow'
+    '';
     pythonImportsCheck = [ "${pname}" "${pname}.kasli_generic" "${pname}.driver" "${pname}.phy" ];
   }
