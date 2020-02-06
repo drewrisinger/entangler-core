@@ -66,7 +66,7 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
             "Expecting %i total I/O",
             num_inputs + num_outputs + num_link_pins,
         )
-    _LOGGER.info("Adding entangler to Kasli. Params: %s", peripheral)
+    _LOGGER.debug("Adding entangler to Kasli. Params: %s", peripheral)
     EntanglerEEM.add_std(
         module,
         eem_dio=peripheral["ports"],
@@ -183,7 +183,7 @@ class EntanglerEEM(eem_mod._EEM):
                 )
             ios.extend(if_io)
         else:
-            _LOGGER.info("NOT using inter-Kasli Entangler interface")
+            _LOGGER.debug("NOT using inter-Kasli Entangler interface")
         return ios
 
     @classmethod
@@ -283,6 +283,11 @@ class EntanglerEEM(eem_mod._EEM):
             phy = io_class["output"](output_sigs[i])
             target.submodules += phy
             target.rtio_channels.append(rtio.Channel.from_phy(phy))
+        _LOGGER.info(
+            "RTIO Channels %i -> %i configured as Outputs",
+            len(target.rtio_channels) - num_outputs,
+            len(target.rtio_channels) - 1,
+        )
 
         # Create specified # of inputs, add them to list for Entangler creation.
         input_phys = []
@@ -294,15 +299,24 @@ class EntanglerEEM(eem_mod._EEM):
             target.submodules += phy
             input_phys.append(phy.rtlink.i)
             target.rtio_channels.append(rtio.Channel.from_phy(phy))
+        _LOGGER.info(
+            "RTIO Channels %i -> %i configured as Inputs",
+            len(target.rtio_channels) - num_inputs,
+            len(target.rtio_channels) - 1,
+        )
 
         # add reference PHY
         if uses_reference:
-            _LOGGER.debug("Adding reference PHY")
             pads = next(dio_pins_iter)
             phy = io_class["input"](pads.p, pads.n)
             target.submodules += phy
             reference_phy = phy
             target.rtio_channels.append(rtio.Channel.from_phy(phy))
+            _LOGGER.info(
+                "Adding reference PHY as input on RTIO channel %i (%s)",
+                len(target.rtio_channels) - 1,
+                pads,
+            )
         else:
             reference_phy = None
 
@@ -325,6 +339,7 @@ class EntanglerEEM(eem_mod._EEM):
         )
         target.submodules += phy
         target.rtio_channels.append(rtio.Channel.from_phy(phy))
+        _LOGGER.info("Added Entangler PHY on channel %i", len(target.rtio_channels) - 1)
 
         # allocate the leftover pins to DIO output. Could maybe change to InOut?
         for pad in dio_pins_iter:
@@ -340,5 +355,5 @@ class EntanglerEEM(eem_mod._EEM):
 
 if __name__ == "__main__":
     # run the basic kasli_generic with logging & the entangler processor.
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     kasligen.main()
