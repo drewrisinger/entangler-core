@@ -13,7 +13,12 @@ let
   artiq = pkgs.callPackage <artiq-full> {};
   # patch exposes peripheral processors dict. Not needed in future versions of ARTIQ, probably. Can remove next few lines then
   patched-artiq = artiq.artiq.overrideAttrs (oldAttrs: rec {
-    patches = (oldAttrs.patches or []) ++ ["${entangler-src}/kasli_generic-expose-peripheral_processors-dict.patch"];
+    patches = (oldAttrs.patches or []) ++ [
+      ( pkgs.fetchpatch{
+        url = "https://github.com/m-labs/artiq/commit/52112d54f9c052159b88b78dc6bd712abd4f062c.patch";
+        sha256 = "0zyzk1czr1s7kvpy0jcc2mp209s5pivrv9020q8bqnl4244hd4fi";
+      } )
+    ];
   });
 in
   pkgs.python3Packages.buildPythonPackage rec {
