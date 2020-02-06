@@ -10,7 +10,9 @@ from artiq.coredevice.rtio import rtio_output
 from artiq.language.core import delay_mu
 from artiq.language.core import kernel
 from artiq.language.types import TInt32
+from artiq.language.types import TInt64
 from artiq.language.types import TList
+from artiq.language.types import TTuple
 from dynaconf import LazySettings
 
 import entangler.phy
@@ -79,7 +81,7 @@ class Entangler:
         delay_mu(self.ref_period_mu)
 
     @kernel
-    def read(self, addr):
+    def read(self, addr: TInt32) -> TInt32:
         """Read parameter.
 
         This method does not advance the timeline but consumes all slack.
@@ -212,7 +214,7 @@ class Entangler:
         self.write(self._ADDRESS_WRITE.HERALD, data)
 
     @kernel
-    def run_mu(self, duration_mu: TInt32):
+    def run_mu(self, duration_mu) -> TTuple([TInt64, TInt32]):
         """Run the entanglement sequence until success, or duration_mu has elapsed.
 
         NOTE: THIS IS A BLOCKING CALL (eats all slack).
@@ -276,7 +278,7 @@ class Entangler:
         return self.read(self._ADDRESS_READ.TIME_REMAINING)
 
     @kernel
-    def get_timestamp_mu(self, channel):
+    def get_timestamp_mu(self, channel: TInt32) -> TInt32:
         """Get the input timestamp for an input channel.
 
         Channels are numbered from (0, settings.NUM_INPUT_SIGNALS)
@@ -285,4 +287,4 @@ class Entangler:
         The timestamp is the time offset, in mu, from the start of the cycle to
         the detected rising edge.
         """
-        return self.read(self._ADDRESS_READ.TIMESTAMP + channel)
+        return self.read(np.int32(self._ADDRESS_READ.TIMESTAMP) + channel)
