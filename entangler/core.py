@@ -22,7 +22,6 @@ from migen import Signal
 # be different from entangler-driven use, but this is only for auxiliary calibration
 # purposes.
 settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
-SEQUENCER_IDX_422ps = 2
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -592,13 +591,6 @@ class EntanglerCore(Module):
             for i, (sequencer, pad, passthrough_sig) in enumerate(
                 zip(self.sequencers, output_pads, passthrough_sigs)
             ):
-                if i == SEQUENCER_IDX_422ps:
-                    local_422ps_out = Mux(
-                        self.enable, sequencer.output, passthrough_sig
-                    )
-                    passthrough_sig = passthrough_sig | (
-                        slave_422ps_raw & self.msm.is_master
-                    )
                 self.specials += Instance(
                     "OBUFDS",
                     i_I=Mux(self.enable, sequencer.output, passthrough_sig),
@@ -627,7 +619,7 @@ class EntanglerCore(Module):
             def ts_buf(pad, sig_o, sig_i, en_out):
                 # diff. IO.
                 # sig_o: output from FPGA
-                # sig_i: intput to FPGA
+                # sig_i: input to FPGA
                 # en_out: enable FPGA output driver
                 self.specials += Instance(
                     "IOBUFDS_INTERMDISABLE",
