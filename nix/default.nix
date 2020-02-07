@@ -11,13 +11,22 @@ let
   entangler-deps = pkgs.callPackage ./entangler-dependencies.nix {};
 
   artiq = pkgs.callPackage <artiq-full> {};
-  # patch exposes peripheral processors dict. Not needed in future versions of ARTIQ, probably. Can remove next few lines then
   patched-artiq = artiq.artiq.overrideAttrs (oldAttrs: rec {
     patches = (oldAttrs.patches or []) ++ [
-      ( pkgs.fetchpatch{
-        url = "https://github.com/m-labs/artiq/commit/52112d54f9c052159b88b78dc6bd712abd4f062c.patch";
-        sha256 = "0zyzk1czr1s7kvpy0jcc2mp209s5pivrv9020q8bqnl4244hd4fi";
-      } )
+      (
+        # patch exposes peripheral processors dict. Not needed in future versions of ARTIQ, probably. Can remove next few lines then
+        pkgs.fetchpatch {
+          url = "https://github.com/m-labs/artiq/commit/52112d54f9c052159b88b78dc6bd712abd4f062c.patch";
+          sha256 = "0zyzk1czr1s7kvpy0jcc2mp209s5pivrv9020q8bqnl4244hd4fi";
+        }
+      )
+      (
+        # forces comm_analyzer to analyze generic Wishbone PHY devices. So can observe the PHY transactions
+        pkgs.fetchpatch {
+          url = "https://patch-diff.githubusercontent.com/raw/m-labs/artiq/pull/1427.patch";
+          sha256 = "1zzd9ghi880k64whkq94m9xyxcrvgl232r00ymmqks79gq6ymg0s";
+        }
+      )
     ];
   });
 in
