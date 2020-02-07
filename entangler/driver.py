@@ -247,7 +247,12 @@ class Entangler:
 
     @kernel
     def get_status(self):
-        """Get status of the entangler gateware."""
+        """Get status of the entangler gateware.
+
+        Returns:
+            (int): 3 flag bits, MSB -> LSB:
+            ready to start; last run was a success; last run timed out
+        """
         return self.read(self._ADDRESS_READ.STATUS)
 
     @kernel
