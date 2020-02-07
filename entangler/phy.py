@@ -109,13 +109,6 @@ class Entangler(Module):
             timing_bit_width - 1,
         )
         _LOGGER.debug("Total output address bits: %i", timing_bit_width + 2)
-        if num_inputs != 4 or num_outputs != 4:
-            _LOGGER.warning(
-                "Using non-standard number of I/O to Entangler. "
-                "Make sure that your addresses (in settings.toml) correspond to "
-                "correct # of bits! Format (MSB->LSB): [read?, external I/O, "
-                "len=Log2(I + O)]"
-            )
 
         self.rtlink = rtlink.Interface(
             rtlink.OInterface(
