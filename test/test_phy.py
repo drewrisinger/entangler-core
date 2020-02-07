@@ -31,7 +31,7 @@ def basic_phy_check(dut: PhyTestHarness):
     yield dut.phy_apd1.t_event.eq(1000)
 
     yield from advance_clock(5)
-    yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b110)  # disable, standalone
+    yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b110)  # standalone, master, disable
     yield from dut.write_heralds([0b0101, 0b1010, 0b1100, 0b0101])
     for i in range(settings.NUM_OUTPUT_CHANNELS):
         # set outputs to be on for 1 coarse clock cycle
@@ -55,15 +55,14 @@ def basic_phy_check(dut: PhyTestHarness):
     #     #     yield dut.phy_apd1.t_event.eq( 8*10+3 + 30)
     #     yield
 
-    # TODO: convert to settings
-    yield from dut.write(0b10000, 0)  # Read status
+    yield from dut.write(entangler.phy.ADDRESS_READ.STATUS, 0)  # Read status
     yield
-    yield from dut.write(0b10000 + 1, 0)  # Read n_cycles
+    yield from dut.write(entangler.phy.ADDRESS_READ.NCYCLES, 0)  # Read n_cycles
     yield
-    yield from dut.write(0b10000 + 2, 0)  # Read time elapsed
+    yield from dut.write(entangler.phy.ADDRESS_READ.TIME_REMAINING, 0)  # Read time elapsed
     yield
     for i in range(5):
-        yield from dut.write(0b11000 + i, 0)  # Read input timestamps
+        yield from dut.write(entangler.phy.ADDRESS_READ.TIMESTAMP + i, 0)  # Read input timestamps
         yield
     yield from advance_clock(5)
 
