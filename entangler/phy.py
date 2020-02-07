@@ -127,7 +127,8 @@ class Entangler(Module):
         assert len(input_phys) == num_inputs
         if not simulate:
             assert len(core_link_pads) >= 5 if reference_phy is not None else 4
-            assert len(output_pads) == num_outputs
+            # +1 for running_output
+            assert len(output_pads) in (num_outputs, num_outputs + 1)
             assert len(passthrough_sigs) == num_outputs
 
         # # #

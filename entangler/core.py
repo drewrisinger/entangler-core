@@ -507,7 +507,9 @@ class EntanglerCore(Module):
                 signals. Number is determined by ``settings.NUM_OUTPUT_CHANNELS``.
             passthrough_sigs (typing.Sequence[Signal]): The signals that should be
                 passed through to the ``output_pads`` when the ``Entangler`` is not
-                running. Should be the same length as ``output_pads``.
+                running. Should be the same length as ``output_pads``
+                (unless you're using a running output, in which case output_pads
+                should be one longer).
             input_phys (typing.Sequence["PHY"]): TTLInput physical gateware modules
                 that register an input TTL event. Expects a list of
                 ``settings.NUM_INPUT_SIGNALS`` input APD/TTL signals.
@@ -547,6 +549,7 @@ class EntanglerCore(Module):
         if simulate:
             use_running_output = False
         else:
+            # only set use_running_output if have an extra output pad
             use_running_output = len(output_pads) == num_outputs + 1
             assert len(output_pads) in (num_outputs, num_outputs + 1)
 
@@ -608,14 +611,18 @@ class EntanglerCore(Module):
             # not running.
             if use_running_output:
                 _LOGGER.info(
-                    "Using a 'RUNNING?' output, assigned to %s", output_pads[-1]
+                    "Using a 'RUNNING?' output, assigned to %s-%d",
+                    output_pads[-1].name,
+                    (len(output_pads) - 1) % 8
                 )
                 self.specials += Instance(
                     "OBUFDS",
-                    i_I=Mux(self.msm.running, 1, passthrough_sigs[4]),
+                    i_I=Mux(self.msm.running, 1, 0),
                     o_O=output_pads[-1].p,
                     o_OB=output_pads[-1].n,
                 )
+            else:
+                _LOGGER.debug("Not using a 'RUNNING?' output")
 
             def ts_buf(pad, sig_o, sig_i, en_out):
                 # diff. IO.

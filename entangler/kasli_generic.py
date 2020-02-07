@@ -39,6 +39,7 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
             "type": "entangler",
             "ports": [list of ints],
             {OPTIONAL} "uses_reference": bool,
+            {OPTIONAL} "running_output": bool
             {OPTIONAL} "link_eem": int,
             {OPTIONAL} "interface_on_lower": bool,
         }
@@ -46,11 +47,14 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
     More details in :class:`EntanglerEEM`.
     """
     using_ref = peripheral.get("uses_reference", False)
+    running_signal = peripheral.get("running_output", False)
     num_inputs = entangler_settings.NUM_INPUT_SIGNALS
     num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
     if using_ref:
         # add reference
         num_inputs += 1
+    if running_signal:
+        num_outputs += 1
 
     num_eem = len(peripheral["ports"]) + len(peripheral.get("link_eem", list()))
     if peripheral.get("link_eem", None) is not None:
@@ -72,6 +76,7 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
         eem_dio=peripheral["ports"],
         eem_interface=peripheral.get("link_eem", None),
         uses_reference=using_ref,
+        running_output=running_signal,
         interface_on_lower=peripheral.get("interface_on_lower", True),
     )
 
@@ -193,6 +198,7 @@ class EntanglerEEM(eem_mod._EEM):
         eem_dio: typing.Sequence[int],
         eem_interface: typing.Optional[int] = None,
         uses_reference: bool = False,
+        running_output: bool = False,
         interface_on_lower: bool = True,
     ):
         """Add an Entangler PHY to a Kasli gateware module.
@@ -211,6 +217,9 @@ class EntanglerEEM(eem_mod._EEM):
                 to be used in conjunction with a reference trigger/signal.
                 For example, if the entanglement can only be generated relative
                 to a pulsed laser (as in Oxford). Defaults to False.
+            running_output (bool, optional): If the Entangler PHY should output
+                an "Is Running?" status signal on the last output channel.
+                Defaults to False.
             interface_on_lower (bool, optional): See :meth:`io` for details.
                 Basically, if no reference is used, should the 4 pins for
                 communication be on the lower or upper half of the DIO bank.
@@ -218,7 +227,8 @@ class EntanglerEEM(eem_mod._EEM):
 
         Note:
             Pin assignment ordering: Pins are assigned in the following order:
-            Outputs, Inputs.
+            Outputs, (optional: is_running?), Inputs (pattern-matching inputs then
+            optional reference input).
             We first try to fill up the eem_dio pads, then the eem_interface pads.
             This means that the Input pins could be assigned to the same EEM
             as the inter-Kasli Entangler communication.
@@ -239,6 +249,7 @@ class EntanglerEEM(eem_mod._EEM):
         num_inputs = entangler_settings.NUM_INPUT_SIGNALS
         if uses_reference:
             num_inputs += 1
+        num_running_outputs = 1 if running_output else 0
         num_if_pins = 5 if uses_reference else 4
 
         # Wanted to do this with itertools, but didn't know how. So this is quick
@@ -266,11 +277,18 @@ class EntanglerEEM(eem_mod._EEM):
         _LOGGER.debug(
             "Total of %i DIO pins are available for Input/Output", len(all_dio_pins)
         )
-        if num_inputs + num_outputs > len(all_dio_pins):
+        if num_inputs + num_outputs + num_running_outputs > len(all_dio_pins):
             _LOGGER.error(
-                "Trying to allocate more output pins (%i) than provided (%i)",
+                "Trying to allocate more I/O pins (%i) than provided (%i)",
                 num_inputs + num_outputs,
                 len(all_dio_pins),
+            )
+        else:
+            _LOGGER.debug(
+                "Num Outputs: %d, Num Inputs: %d, # DIO Pins: %d",
+                num_outputs,
+                num_inputs,
+                len(all_dio_pins)
             )
 
         # *** Create PHYs for outputs then inputs (then reference, opt) ***
@@ -288,6 +306,11 @@ class EntanglerEEM(eem_mod._EEM):
             len(target.rtio_channels) - num_outputs,
             len(target.rtio_channels) - 1,
         )
+        if running_output:
+            # processing will be taken care of in EntanglerCore
+            pads = next(dio_pins_iter)
+            output_pads.append(pads)
+            _LOGGER.info("Assigned running output to %s-%d", pads.name, (len(output_pads)-1) % 8)
 
         # Create specified # of inputs, add them to list for Entangler creation.
         input_phys = []
