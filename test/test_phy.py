@@ -22,10 +22,11 @@ from phytester import PhyTestHarness  # noqa: E402 pylint: disable=import-error
 settings = LazySettings(
     ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
 )
-
+_LOGGER = logging.getLogger(__name__)
 
 def basic_phy_check(dut: PhyTestHarness):
     """Test the entire :mod:`entangler` gateware basic functionality works."""
+    _LOGGER.debug("Starting basic_phy_check")
     yield dut.phy_ref.t_event.eq(1000)
     yield dut.phy_apd0.t_event.eq(1000)
     yield dut.phy_apd1.t_event.eq(1000)
@@ -72,6 +73,7 @@ def check_phy_timeout(dut: PhyTestHarness):
 
     Sweeps the timeout to occur at all possible points in the state machine operation.
     """
+    _LOGGER.debug("Starting basic_phy_check")
     # Declare internal helper functions.
     def do_timeout(timeout, n_cycles=10):
         yield
@@ -105,6 +107,9 @@ def phy_dut() -> PhyTestHarness:
     return PhyTestHarness()
 
 
+ARTIQ_CLOCKS = {"sys": 8, "rio": 8, "rio_phy": 8}
+
+
 @pytest.mark.parametrize("test_function", [basic_phy_check, check_phy_timeout],)
 def test_phy_func(request, phy_dut: PhyTestHarness, test_function):
     """Run test functions on an Entangler PHY."""
@@ -112,7 +117,7 @@ def test_phy_func(request, phy_dut: PhyTestHarness, test_function):
         phy_dut,
         test_function(phy_dut),
         vcd_name=(request.node.name + ".vcd"),
-        clocks={"sys": 8, "rio": 8, "rio_phy": 8},
+        clocks=ARTIQ_CLOCKS,
     )
 
 
@@ -123,7 +128,7 @@ if __name__ == "__main__":
         dut,
         basic_phy_check(dut),
         vcd_name="phy.vcd",
-        clocks={"sys": 8, "rio": 8, "rio_phy": 8},
+        clocks=ARTIQ_CLOCKS,
     )
 
     dut = PhyTestHarness()
@@ -131,5 +136,5 @@ if __name__ == "__main__":
         dut,
         check_phy_timeout(dut),
         vcd_name="phy_timeout.vcd",
-        clocks={"sys": 8, "rio": 8, "rio_phy": 8},
+        clocks=ARTIQ_CLOCKS,
     )
