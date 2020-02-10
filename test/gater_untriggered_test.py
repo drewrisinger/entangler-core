@@ -23,7 +23,7 @@ from gateware_utils import MockPhy  # noqa: E402 pylint: disable=import-error
 #  ./helpers/gateware_utils
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
 
 

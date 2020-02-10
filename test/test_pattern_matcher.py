@@ -11,7 +11,7 @@ from entangler.core import PatternMatcher
 
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
 
 

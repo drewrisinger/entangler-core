@@ -24,7 +24,7 @@ from phytester import PhyTestHarness    # noqa: E402
 
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
 COARSE_CLOCK_PERIOD_NS = 8
 ION_PHOTON_HERALD_PATTERNS = (0b0101, 0b1010, 0b1100, 0b0011)

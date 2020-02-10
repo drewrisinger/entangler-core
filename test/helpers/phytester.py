@@ -12,7 +12,7 @@ import entangler.phy
 
 _LOGGER = logging.getLogger(__name__)
 settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
 
 
@@ -48,6 +48,7 @@ class PhyTestHarness(migen.Module):
         )
 
         self.comb += self.counter.eq(self.core.core.msm.m)
+        _LOGGER.debug("Finished setup")
 
     def write(self, address: int, data: int) -> None:
         """Write data to the ``EntanglerPHY`` using the data bus.

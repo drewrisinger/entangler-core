@@ -20,7 +20,7 @@ from phytester import PhyTestHarness  # noqa: E402 pylint: disable=import-error
 
 
 settings = LazySettings(
-    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "/")
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
 _LOGGER = logging.getLogger(__name__)
 
