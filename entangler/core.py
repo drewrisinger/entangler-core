@@ -17,10 +17,6 @@ from migen import NextState
 from migen import NextValue
 from migen import Signal
 
-# The 422ps laser system is shared, so for ease of use we OR the slave's RTIO TTL output
-# with the master's signal as long as the entangler core isn't active. The timing will
-# be different from entangler-driven use, but this is only for auxiliary calibration
-# purposes.
 settings = LazySettings(ROOT_PATH_FOR_DYNACONF=__file__)
 _LOGGER = logging.getLogger(__name__)
 
@@ -165,8 +161,6 @@ class UntriggeredInputGater(Module):
 
     NOTE: if both ``gate_start, gate_stop < 8``, or if ``gate_start >= gate_stop``,
     this module will not trigger.
-
-    The start gate offset must be at least 8 * mu.
     """
 
     def __init__(self, m, phy_sig):
@@ -175,9 +169,6 @@ class UntriggeredInputGater(Module):
 
         self.is_window_valid = Signal()  # output
         self.triggered = Signal()
-        # self.is_triggering = Signal()   # output    # TODO: remove, temp
-        # self.past_window_start = Signal() # output, TODO: remove, temp
-        # self.before_window_end = Signal()
 
         n_fine = len(phy_sig.fine_ts)
 
@@ -204,7 +195,6 @@ class UntriggeredInputGater(Module):
         t_sig = Signal(full_timestamp_width)
         self.comb += [
             t_sig.eq(Cat(phy_sig.fine_ts, m)),
-            # TODO: maybe remove or document the following better
             self.is_window_valid.eq(
                 (self.gate_start >= 8)
                 & (self.gate_stop >= 8)
@@ -219,17 +209,6 @@ class UntriggeredInputGater(Module):
                 & self.is_window_valid
             ),
         ]
-        # # TODO: remove
-        # self.comb += [
-        #     self.is_triggering.eq(
-        #         past_window_start
-        #         & before_window_end
-        #         & self.is_window_valid
-        #         & ~ self.clear
-        #     ),
-        #     self.past_window_start.eq(past_window_start),
-        #     self.before_window_end.eq(before_window_end),
-        # ]
 
         self.sync += [
             # register input event
@@ -491,7 +470,9 @@ class EntanglerCore(Module):
     and is the primary one that should be used by end-users.
 
     Attributes:
-        enable (Signal): INPUT, starts the entanglement generation/checking sequence.
+        enable (Signal): INPUT, enables starting the Entangler protocol.
+            Functionally, switches the outputs from separate ARTIQ TTLOuts to being
+            driven by the Entangler.
         uses_reference_trigger (Signal): OUTPUT, whether this entangler is using
             a reference signal for its trigger. This is static, defined at compile time.
         triggers_received (Signal(max=settings.MAX_TRIGGER_COUNTS)): OUTPUT,
@@ -585,7 +566,6 @@ class EntanglerCore(Module):
                 for phy_apd in input_phys
             ]
         else:
-            # phy_422pulse = self.msm.cycle_starting
             gaters = [
                 UntriggeredInputGater(self.msm.m, phy_apd) for phy_apd in input_phys
             ]
@@ -629,14 +609,7 @@ class EntanglerCore(Module):
                 )
                 self.specials += Instance(
                     "OBUFDS",
-                    i_I=self.msm.running | self.msm.timeout,
-                    # i_I=(self.msm.running ^ (gaters[0].triggered | input_phys[0].stb)) | self.msm.success, # TODO: reenable running
-                    # i_I=gaters[0].triggered,  # TODO: remove. seems to hang the core every time this is set.
-                    # i_I=gaters[0].is_window_valid,    # TODO: remove. works
-                    # i_I=gaters[0].is_triggering,    # TODO: remove. doesn't work
-                    # i_I=gaters[0].clear,  # TODO: remove. working
-                    # i_I=gaters[0].past_window_start,  # working
-                    # i_I=gaters[0].before_window_end,    # working
+                    i_I=self.msm.running,
                     o_O=output_pads[-1].p,
                     o_OB=output_pads[-1].n,
                 )
