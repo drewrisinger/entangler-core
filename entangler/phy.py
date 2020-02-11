@@ -4,6 +4,7 @@ import logging
 import math
 import typing
 
+import numpy
 from artiq.gateware.rtio import rtlink
 from dynaconf import LazySettings
 from migen import Case
@@ -46,7 +47,7 @@ class ADDRESS_READ(enum.IntEnum):
     NCYCLES = _read_start + 1
     TIME_REMAINING = _read_start + 2
     NTRIGGERS = _read_start + 3
-    TIMESTAMP = 0b11 << _channel_bits
+    TIMESTAMP = numpy.int32(0b11 << _channel_bits)
 
 
 class Entangler(Module):
@@ -177,6 +178,7 @@ class Entangler(Module):
                 & self.rtlink.o.stb,  # noqa: W503
                 # Write config
                 self.core.enable.eq(self.rtlink.o.data[0]),
+                # NOTE: is_master is set below. rtlink.o.data[1]
                 self.core.msm.standalone.eq(self.rtlink.o.data[2]),
             ),
             If(
