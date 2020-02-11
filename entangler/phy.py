@@ -206,7 +206,7 @@ class Entangler(Module):
         # Write is_master bit in rio_phy reset domain to not break 422ps trigger
         # forwarding on core.reset().
         self.sync.rio_phy += If(
-            (self.rtlink.o.address == 0) & self.rtlink.o.stb,
+            (self.rtlink.o.address == ADDRESS_WRITE.CONFIG) & self.rtlink.o.stb,
             self.core.msm.is_master.eq(self.rtlink.o.data[1]),
         )
         # TODO: what is reset domain??

@@ -175,6 +175,9 @@ class UntriggeredInputGater(Module):
 
         self.is_window_valid = Signal()  # output
         self.triggered = Signal()
+        # self.is_triggering = Signal()   # output    # TODO: remove, temp
+        # self.past_window_start = Signal() # output, TODO: remove, temp
+        # self.before_window_end = Signal()
 
         n_fine = len(phy_sig.fine_ts)
 
@@ -201,6 +204,7 @@ class UntriggeredInputGater(Module):
         t_sig = Signal(full_timestamp_width)
         self.comb += [
             t_sig.eq(Cat(phy_sig.fine_ts, m)),
+            # TODO: maybe remove or document the following better
             self.is_window_valid.eq(
                 (self.gate_start >= 8)
                 & (self.gate_stop >= 8)
@@ -215,6 +219,17 @@ class UntriggeredInputGater(Module):
                 & self.is_window_valid
             ),
         ]
+        # # TODO: remove
+        # self.comb += [
+        #     self.is_triggering.eq(
+        #         past_window_start
+        #         & before_window_end
+        #         & self.is_window_valid
+        #         & ~ self.clear
+        #     ),
+        #     self.past_window_start.eq(past_window_start),
+        #     self.before_window_end.eq(before_window_end),
+        # ]
 
         self.sync += [
             # register input event
@@ -319,7 +334,7 @@ class MainStateMachine(Module):
 
     """
 
-    def __init__(self, counter_width=10):
+    def __init__(self, counter_width=settings.COARSE_COUNTER_WIDTH):
         """Define the state machine logic for running the input & output sequences."""
         self.m = Signal(counter_width)  # Global cycle-relative time.
         self.time_remaining = Signal(32)  # Clock cycles remaining before timeout
@@ -558,8 +573,13 @@ class EntanglerCore(Module):
             ChannelSequencer(self.msm.m) for _ in range(settings.NUM_OUTPUT_CHANNELS)
         ]
 
+        # Add a strobe to clear the inputs/outputs on enable
+        enable_d = Signal()
+        enable_stb = Signal()
+        self.sync += enable_d.eq(self.enable)
+        self.comb += enable_stb.eq(self.enable & ~enable_d)
+
         if use_reference_pulse:
-            # phy_422pulse = reference_phy
             gaters = [
                 TriggeredInputGater(self.msm.m, reference_phy, phy_apd)
                 for phy_apd in input_phys
@@ -605,11 +625,18 @@ class EntanglerCore(Module):
                 _LOGGER.info(
                     "Using a 'RUNNING?' output, assigned to %s-%d",
                     output_pads[-1].name,
-                    (len(output_pads) - 1) % 8
+                    (len(output_pads) - 1) % 8,
                 )
                 self.specials += Instance(
                     "OBUFDS",
-                    i_I=Mux(self.msm.running, 1, 0),
+                    i_I=self.msm.running | self.msm.timeout,
+                    # i_I=(self.msm.running ^ (gaters[0].triggered | input_phys[0].stb)) | self.msm.success, # TODO: reenable running
+                    # i_I=gaters[0].triggered,  # TODO: remove. seems to hang the core every time this is set.
+                    # i_I=gaters[0].is_window_valid,    # TODO: remove. works
+                    # i_I=gaters[0].is_triggering,    # TODO: remove. doesn't work
+                    # i_I=gaters[0].clear,  # TODO: remove. working
+                    # i_I=gaters[0].past_window_start,  # working
+                    # i_I=gaters[0].before_window_end,    # working
                     o_O=output_pads[-1].p,
                     o_OB=output_pads[-1].n,
                 )
@@ -681,8 +708,12 @@ class EntanglerCore(Module):
         self.comb += [
             gater.clear.eq(self.msm.cycle_starting) for gater in self.apd_gaters
         ]
+        # TODO: remove run_stb here??
         self.comb += [
-            sequencer.clear.eq(self.msm.cycle_starting) for sequencer in self.sequencers
+            sequencer.clear.eq(
+                (self.msm.cycle_starting | self.msm.run_stb | enable_stb)
+            )
+            for sequencer in self.sequencers
         ]
         self.comb += [
             self.msm.herald.eq(self.heralder.is_match),
