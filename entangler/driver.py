@@ -218,7 +218,7 @@ class Entangler:
         for i in range(len(patterns)):
             data |= (patterns[i] & self._PATTERN_LENGTH_MASK) << (self._PATTERN_WIDTH * i)
             data |= 1 << (self._NUM_ALLOWED_PATTERNS * self._PATTERN_WIDTH + i)
-        self._write(self._ADDRESS_WRITE.HERALD, data)
+        self._write(self._ADDRESS_WRITE.PATTERNS, data)
 
     @kernel
     def run_mu(self, duration_mu) -> TTuple([TInt64, TInt32]):

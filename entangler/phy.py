@@ -36,7 +36,7 @@ class ADDRESS_WRITE(enum.IntEnum):
     CONFIG = 0
     RUN = 1
     TCYCLE = 2
-    HERALD = 3
+    PATTERNS = 3
     TIMING = 0b1 << _channel_bits
 
 
@@ -188,7 +188,7 @@ class Entangler(Module):
                 self.core.msm.cycle_length_input.eq(self.rtlink.o.data[:10]),
             ),
             If(
-                (self.rtlink.o.address == ADDRESS_WRITE.HERALD)
+                (self.rtlink.o.address == ADDRESS_WRITE.PATTERNS)
                 & self.rtlink.o.stb,  # noqa: W503
                 # Write herald patterns and enables
                 *[
