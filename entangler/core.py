@@ -383,9 +383,15 @@ class MainStateMachine(Module):
         # The core times out if time_remaining countdown reaches zero, or,
         # if we are a slave, if the master has timed out.
         # This is required to ensure the slave syncs with the master
-        self.comb += self.timeout.eq(
-            (self.time_remaining == 0) | (~self.act_as_master & self.timeout_in)
-        )
+        # Not allowed to timeout if the state machine succeeded.
+        has_succeeded = Signal()
+        self.comb += [
+            has_succeeded.eq(self.success | self.success_in),
+            self.timeout.eq(
+                ((self.time_remaining == 0) & ~has_succeeded)
+                | (~self.act_as_master & self.timeout_in)
+            ),
+        ]
 
         self.sync += [
             If(self.run_stb, self.time_remaining.eq(self.timeout_input)).Else(

@@ -76,6 +76,8 @@ def msm_standalone_test(dut):
         assert finished
         success = yield dut.success
         assert success == allow_success
+        # check no timeout if succeeded
+        assert bool((yield dut.timeout)) != allow_success
 
     yield from run()
 
