@@ -70,7 +70,7 @@ class EntanglerDemo(artiq_env.EnvExperiment):
         # delay(1 * aq_units.us)
         self.entangler.set_cycle_length_mu(1200)
         # delay(1 * aq_units.us)
-        self.entangler.set_heralds([0b1111, 0b1000, 0b0011])
+        self.entangler.set_patterns([0b1111, 0b1000, 0b0011])
         # delay(1 * aq_units.us)
         rtio_log("entangler", "Ended setup")
         delay(10 * aq_units.us)
