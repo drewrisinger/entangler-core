@@ -1,16 +1,16 @@
 # Configuration settings for the Entangler gateware.
-# Allows configuring the counter widths, number of inputs & outputs, etc.
+# Allows configuring the number of inputs & outputs, counter widths, etc.
 
 # I believe these can be overwritten by setting the same-named environment variable,
 # if you cannot modify this file for some reason.
 
 [development]
-# NOTE: if you change these, you will probably need to change the following addresses (see ./README.md)
+# NOTE: if you would like an "entangler_is_running" output, decrease NUM_OUTPUT_CHANNELS by 1
 NUM_INPUT_SIGNALS = 4
 NUM_OUTPUT_CHANNELS = 12
 NUM_PATTERNS_ALLOWED = 4
 
-# These ones probably shouldn't need to be changed, but leaving it here just in case
+# These ones probably shouldn't need changed, but leaving it here just in case
 # Width of sequence duration counters and the coarse part of input timestamps
 # (units of clock cycles).
 COARSE_COUNTER_WIDTH = 11
