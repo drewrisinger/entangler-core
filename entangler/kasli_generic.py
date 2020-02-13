@@ -310,7 +310,11 @@ class EntanglerEEM(eem_mod._EEM):
             # processing will be taken care of in EntanglerCore
             pads = next(dio_pins_iter)
             output_pads.append(pads)
-            _LOGGER.info("Assigned running output to %s-%d", pads.name, (len(output_pads)-1) % 8)
+            _LOGGER.info(
+                "Assigned running output to %s-%d",
+                pads.name,
+                (len(output_pads)-1) % 8
+            )
 
         # Create specified # of inputs, add them to list for Entangler creation.
         input_phys = []
