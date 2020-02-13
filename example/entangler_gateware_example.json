@@ -12,6 +12,7 @@
                 0,
                 1
             ],
+            "running_output": false,
             "uses_reference": false
         }
     ]
