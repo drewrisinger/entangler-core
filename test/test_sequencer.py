@@ -21,8 +21,8 @@ def check_sequencer_timing(dut):
     start_time = 10
     stop_time = 30
     yield dut.core.clear.eq(1)
-    yield dut.core.m_start.eq(10)
-    yield dut.core.m_stop.eq(30)
+    yield dut.core.m_start.eq(start_time)
+    yield dut.core.m_stop.eq(stop_time)
     yield
     yield dut.core.clear.eq(0)
 
@@ -43,17 +43,32 @@ def check_sequencer_timing(dut):
             assert (yield dut.core.output) == 0
 
 
+def check_output_glitch(dut):
+    """Can get startup glitch when clock (m) is 0 & all inputs are 0.
+
+    This issue is due to sync vs combinational logic on the clear signal.
+    """
+    yield dut.m.eq(0)
+    yield
+    assert (yield dut.core.output) == 1
+    yield dut.core.clear.eq(1)
+    yield
+    # yield # We don't want this yield, this yield made the test pass pre-bugfix
+    assert (yield dut.core.output) == 0
+
+
 @pytest.fixture
 def sequencer_dut() -> ChannelSequencerHarness:
     """Create a ChannelSequencer for sim."""
     return ChannelSequencerHarness()
 
 
-def test_channel_sequencer(request, sequencer_dut: ChannelSequencer):
+@pytest.mark.parametrize("test_function", [check_sequencer_timing, check_output_glitch])
+def test_channel_sequencer(request, sequencer_dut: ChannelSequencer, test_function):
     """Test the timing output of a ChannelSequencer."""
     run_simulation(
         sequencer_dut,
-        check_sequencer_timing(sequencer_dut),
+        test_function(sequencer_dut),
         vcd_name=(request.node.name + ".vcd"),
     )
 
@@ -61,3 +76,5 @@ def test_channel_sequencer(request, sequencer_dut: ChannelSequencer):
 if __name__ == "__main__":
     dut = ChannelSequencerHarness()
     run_simulation(dut, check_sequencer_timing(dut), vcd_name="sequencer.vcd")
+    dut = ChannelSequencerHarness()
+    run_simulation(dut, check_output_glitch(dut), vcd_name="sequencer_glitch.vcd")

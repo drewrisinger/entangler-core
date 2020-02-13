@@ -37,7 +37,7 @@ class ChannelSequencer(Module):
 
     """
 
-    def __init__(self, m):
+    def __init__(self, m: Signal):
         """Output a signal for a given time.
 
         Args:
@@ -54,17 +54,21 @@ class ChannelSequencer(Module):
 
         self.stb_start = Signal()
         self.stb_stop = Signal()
+        output_enable = Signal()
+        sync_output = Signal()
 
         self.comb += [
             self.stb_start.eq(m == self.m_start),
             self.stb_stop.eq(m == self.m_stop),
+            output_enable.eq(~self.clear),
+            self.output.eq(output_enable & sync_output)
         ]
 
         self.sync += [
-            If(self.stb_start, self.output.eq(1)).Else(
-                If(self.stb_stop, self.output.eq(0))
+            If(self.stb_start, sync_output.eq(1)).Else(
+                If(self.stb_stop, sync_output.eq(0))
             ),
-            If(self.clear, self.output.eq(0)),
+            If(self.clear, sync_output.eq(0)),
         ]
 
 
