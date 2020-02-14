@@ -258,7 +258,9 @@ class Entangler:
 
         Returns:
             (int): 3 flag bits, MSB -> LSB:
-            ready to start; last run was a success; last run timed out
+            last run timed out; last run was a success; ready to start
+            NOTE: ready_to_start is usually not set b/c only asserted during run()
+
         """
         return self._read(self._ADDRESS_READ.STATUS)
 
