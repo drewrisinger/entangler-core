@@ -32,7 +32,7 @@ let
 in
   pkgs.python3Packages.buildPythonPackage rec {
     pname = "entangler";
-    version = "0.2";
+    version = "1.0.0";
 
     src = entangler-src;
 

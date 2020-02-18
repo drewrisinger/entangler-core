@@ -8,7 +8,7 @@ import setuptools
 if __name__ == "__main__":
     setuptools.setup(
         name="entangler",
-        version="0.1",
+        version="1.0.0",
         packages=setuptools.find_packages(),
         requirements=["artiq>=5", "dynaconf", "migen", "misoc", "numpy"],
         url="https://github.com/drewrisinger/entangler-core",
