@@ -33,8 +33,11 @@ in
   pkgs.python3Packages.buildPythonPackage rec {
     pname = "entangler";
     version = "0.2";
+
     src = entangler-src;
-    buildInputs = with pkgs.python3Packages; [pytestrunner];
+
+    buildInputs = with pkgs.python3Packages; [ pytestrunner ];
+
     propagatedBuildInputs = [
       patched-artiq
       entangler-deps.dynaconf
@@ -42,10 +45,19 @@ in
       artiq.misoc
       pkgs.python3Packages.setuptools # setuptools needed for ``import pkg_resources`` to find settings.toml
     ];
+
     doCheck = true;
     checkInputs = [ pkgs.python3Packages.pytest ];
     checkPhase = ''
       pytest -m 'not slow'
     '';
-    pythonImportsCheck = [ "${pname}" "${pname}.kasli_generic" "${pname}.driver" "${pname}.phy" ];
+    pythonImportsCheck = [ pname "${pname}.kasli_generic" "${pname}.driver" "${pname}.phy" ];
+
+    meta = with pkgs.lib; {
+      description = "ARTIQ extension to generate & check patterns (for entanglement).";
+      homepage = "https://github.com/drewrisinger/entangler-core/";
+      license = licenses.gpl3;
+      platforms = platforms.all;
+      maintainers = with maintainers; [ drewrisinger ];
+    };
   }
