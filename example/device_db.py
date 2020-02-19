@@ -1,6 +1,18 @@
 """Minimal ARTIQ Device DB for demonstrating the Entangler."""
 
+import pkg_resources
+from dynaconf import LazySettings
+
+# Get default settings from entangler package's settings.toml
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
+)
+# change if your JSON file has this set
 using_running_output = False
+
+# Number of I/O from settings.toml
+num_outputs = settings.NUM_OUTPUT_CHANNELS
+num_inputs = settings.NUM_ENTANGLER_INPUT_SIGNALS + settings.NUM_GENERIC_INPUT_SIGNALS
 
 device_db = {
     "core": {
@@ -14,7 +26,10 @@ device_db = {
         "module": "entangler.driver",
         "class": "Entangler",
         "arguments": {
-            "channel": 15 if using_running_output else 16,
+            # NOTE: channels are 0-indexed
+            "channel": (num_outputs + num_inputs - 1)
+            if using_running_output
+            else (num_inputs + num_outputs),
             "is_master": True,
         },
         "comments": [
@@ -25,9 +40,11 @@ device_db = {
         ],
     },
 }
-for i in range(16):
-    if i < 12:
-        if i == 11 and using_running_output:
+
+# Add TTL drivers for each I/O in the example.
+for i in range(num_outputs + num_inputs):
+    if i < num_outputs:
+        if i == (num_outputs - 1) and using_running_output:
             # skip this channel
             continue
         device_db["out{}-{}".format(i // 8, i % 8)] = {
