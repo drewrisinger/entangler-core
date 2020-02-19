@@ -224,8 +224,10 @@ class EntanglerEEM(eem_mod._EEM):
 
         Note:
             Pin assignment ordering: Pins are assigned in the following order:
-            Outputs, (optional: is_running?), Inputs (pattern-matching inputs then
-            optional reference input).
+            Outputs,
+            (optional out: entangler_is_running?, if set in JSON & settings.toml),
+            Entangler Inputs (pattern-matching inputs then optional reference input),
+            Generic Inputs (other InOuts, not included in pattern-matching).
             We first try to fill up the eem_dio pads, then the eem_interface pads.
             This means that the Input pins could be assigned to the same EEM
             as the inter-Kasli Entangler communication.
@@ -243,9 +245,11 @@ class EntanglerEEM(eem_mod._EEM):
 
         io_class = {"input": ttl_serdes_7series.Input_8X, "output": ttl_simple.Output}
         num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
-        num_inputs = entangler_settings.NUM_ENTANGLER_INPUT_SIGNALS
+        num_entangler_inputs = entangler_settings.NUM_ENTANGLER_INPUT_SIGNALS
+        num_generic_inputs = entangler_settings.NUM_GENERIC_INPUT_SIGNALS
+        num_total_inputs = num_entangler_inputs + num_generic_inputs
         if uses_reference:
-            num_inputs += 1
+            num_entangler_inputs += 1
         num_running_outputs = 1 if running_output else 0
         num_if_pins = 5 if uses_reference else 4
 
@@ -274,18 +278,19 @@ class EntanglerEEM(eem_mod._EEM):
         _LOGGER.debug(
             "Total of %i DIO pins are available for Input/Output", len(all_dio_pins)
         )
-        if num_inputs + num_outputs + num_running_outputs > len(all_dio_pins):
+        if num_total_inputs + num_outputs + num_running_outputs > len(all_dio_pins):
             _LOGGER.error(
                 "Trying to allocate more I/O pins (%i) than provided (%i)",
-                num_inputs + num_outputs,
+                num_total_inputs + num_outputs + num_running_outputs,
                 len(all_dio_pins),
             )
         else:
             _LOGGER.debug(
-                "Num Outputs: %d, Num Inputs: %d, # DIO Pins: %d",
+                "Num Outputs: %d, Num Inputs: %d (%d entangler), # DIO Pins: %d",
                 num_outputs,
-                num_inputs,
-                len(all_dio_pins)
+                num_total_inputs,
+                num_entangler_inputs,
+                len(all_dio_pins),
             )
 
         # *** Create PHYs for outputs then inputs (then reference, opt) ***
@@ -315,18 +320,21 @@ class EntanglerEEM(eem_mod._EEM):
 
         # Create specified # of inputs, add them to list for Entangler creation.
         input_phys = []
-        for i in range(num_inputs):
+        for i in range(num_total_inputs):
             pads = next(dio_pins_iter)
             if int(pads.name.lstrip("dio")) == eem_interface:
                 _LOGGER.info("Assigning Input[%i] to Interface Board", i)
             phy = io_class["input"](pads.p, pads.n)
             target.submodules += phy
-            input_phys.append(phy.rtlink.i)
+            # only add num_entangler_inputs -> input_phys -> Entanglercore
+            if i < num_entangler_inputs:
+                input_phys.append(phy.rtlink.i)
             target.rtio_channels.append(rtio.Channel.from_phy(phy))
         _LOGGER.info(
-            "RTIO Channels %i -> %i configured as Inputs",
-            len(target.rtio_channels) - num_inputs,
+            "RTIO Channels %i -> %i configured as Inputs (first %i entangle-able)",
+            len(target.rtio_channels) - num_total_inputs,
             len(target.rtio_channels) - 1,
+            num_entangler_inputs,
         )
 
         # add reference PHY
