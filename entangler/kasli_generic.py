@@ -4,11 +4,8 @@ Effectively adds :mod:`entangler` to kasli_generic builder
 (artiq/gateware/kasli_generic.py) and the EEM module
 (artiq/gateware/eem.py).
 
-This requires that either your ARTIQ branch include
-``52112d54f9c052159b88b78dc6bd712abd4f062c``, or use the equivalent
-``kasli_generic-expose-peripheral_processors-dict.patch`` in this module.
-
-You can apply patches with ``$ git apply PATCH_FILE``.
+This requires that your ARTIQ branch include PR #1426, which is handled
+by the Nix script.
 """
 import logging
 import typing
