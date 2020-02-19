@@ -28,8 +28,8 @@ def basic_phy_check(dut: PhyTestHarness):
     """Test the entire :mod:`entangler` gateware basic functionality works."""
     _LOGGER.debug("Starting basic_phy_check")
     yield dut.phy_ref.t_event.eq(1000)
-    yield dut.phy_apd0.t_event.eq(1000)
-    yield dut.phy_apd1.t_event.eq(1000)
+    yield dut.input_phys[0].t_event.eq(1000)
+    yield dut.input_phys[1].t_event.eq(1000)
 
     yield from advance_clock(5)
     yield from dut.write(entangler.phy.ADDRESS_WRITE.CONFIG, 0b110)  # standalone, master, disable
@@ -52,8 +52,8 @@ def basic_phy_check(dut: PhyTestHarness):
     # for i in range(1000):
     #     # if i==200:
     #     #     yield dut.phy_ref.t_event.eq( 8*10+3 )
-    #     #     yield dut.phy_apd0.t_event.eq( 8*10+3 + 18)
-    #     #     yield dut.phy_apd1.t_event.eq( 8*10+3 + 30)
+    #     #     yield dut.input_phys[0].t_event.eq( 8*10+3 + 18)
+    #     #     yield dut.input_phys[1].t_event.eq( 8*10+3 + 30)
     #     yield
 
     yield from dut.write(entangler.phy.ADDRESS_READ.STATUS, 0)  # Read status

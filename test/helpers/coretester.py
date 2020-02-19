@@ -3,11 +3,16 @@ import logging
 import typing
 
 import migen
+import pkg_resources
+from dynaconf import LazySettings
 from gateware_utils import MockPhy  # pylint: disable=import-error
 
 import entangler.core
 
 _LOGGER = logging.getLogger(__name__)
+settings = LazySettings(
+    ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
+)
 
 
 class CoreTestHarness(migen.Module):
@@ -21,19 +26,18 @@ class CoreTestHarness(migen.Module):
         """
         self.counter = migen.Signal(32)
 
-        self.submodules.phy_apd0 = MockPhy(self.counter)
-        self.submodules.phy_apd1 = MockPhy(self.counter)
-        self.submodules.phy_apd2 = MockPhy(self.counter)
-        self.submodules.phy_apd3 = MockPhy(self.counter)
+        self.input_phys = [
+            MockPhy(self.counter) for _ in range(settings.NUM_ENTANGLER_INPUT_SIGNALS)
+        ]
+        self.submodules += self.input_phys
         if use_reference:
             self.submodules.phy_ref = MockPhy(self.counter)
-        input_phys = [self.phy_apd0, self.phy_apd1, self.phy_apd2, self.phy_apd3]
 
         self.submodules.core = entangler.core.EntanglerCore(
             core_link_pads=None,
             output_pads=None,
             passthrough_sigs=None,
-            input_phys=input_phys,
+            input_phys=self.input_phys,
             reference_phy=self.phy_ref if use_reference else None,
             simulate=True,
         )
@@ -84,7 +88,7 @@ class CoreTestHarness(migen.Module):
     def set_event_times(self, event_times: typing.Sequence[int]) -> None:
         """Set the times when the mocked 'input' signals will occur."""
         for i, time in enumerate(event_times):
-            yield getattr(self, "phy_apd{}".format(i)).t_event.eq(time)
+            yield self.input_phys[i].t_event.eq(time)
 
     def set_patterns(self, pattern_list: typing.Sequence[int]):
         """Set the patterns that the ``EntanglerCore`` will try to match."""

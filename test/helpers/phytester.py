@@ -27,13 +27,12 @@ class PhyTestHarness(migen.Module):
         self.use_ref = use_ref
         self.counter = migen.Signal(32)
 
-        self.submodules.phy_apd0 = MockPhy(self.counter)
-        self.submodules.phy_apd1 = MockPhy(self.counter)
-        self.submodules.phy_apd2 = MockPhy(self.counter)
-        self.submodules.phy_apd3 = MockPhy(self.counter)
+        self.input_phys = [
+            MockPhy(self.counter) for _ in range(settings.NUM_ENTANGLER_INPUT_SIGNALS)
+        ]
+        self.submodules += self.input_phys
         if use_ref:
             self.submodules.phy_ref = MockPhy(self.counter)
-        input_phys = [self.phy_apd0, self.phy_apd1, self.phy_apd2, self.phy_apd3]
 
         core_link_pads = None
         output_pads = None
@@ -42,7 +41,7 @@ class PhyTestHarness(migen.Module):
             core_link_pads,
             output_pads,
             passthrough_sigs,
-            input_phys,
+            self.input_phys,
             reference_phy=self.phy_ref if use_ref else None,
             simulate=True,
         )
@@ -106,4 +105,4 @@ class PhyTestHarness(migen.Module):
         if self.use_ref:
             yield self.phy_ref.t_event.eq(ref_time)
         for i, t in enumerate(real_event_times):
-            yield getattr(self, "phy_apd{}".format(i)).t_event.eq(t)
+            yield self.input_phys[i].t_event.eq(t)
