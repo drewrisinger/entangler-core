@@ -54,7 +54,7 @@ def check_all_possible_patterns(dut: PatternMatcher):
 def pattern_dut() -> PatternMatcher:
     """Create a PatternMatcher for sim."""
     return PatternMatcher(
-        num_inputs=settings.NUM_INPUT_SIGNALS,
+        num_inputs=settings.NUM_ENTANGLER_INPUT_SIGNALS,
         num_patterns=settings.NUM_PATTERNS_ALLOWED,
     )
 
@@ -82,7 +82,7 @@ def test_one_pattern(request, pattern_dut, pattern):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     num_patterns = settings.NUM_PATTERNS_ALLOWED
-    num_signals = settings.NUM_INPUT_SIGNALS
+    num_signals = settings.NUM_ENTANGLER_INPUT_SIGNALS
     dut = PatternMatcher(num_inputs=num_signals, num_patterns=num_patterns)
     run_simulation(
         dut, check_all_possible_patterns(dut), vcd_name="heralder.vcd",

@@ -45,7 +45,7 @@ def peripheral_entangler(module, peripheral: typing.Dict[str, list]):
     """
     using_ref = peripheral.get("uses_reference", False)
     running_signal = peripheral.get("running_output", False)
-    num_inputs = entangler_settings.NUM_INPUT_SIGNALS
+    num_inputs = entangler_settings.NUM_ENTANGLER_INPUT_SIGNALS
     num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
     if using_ref:
         # add reference
@@ -243,7 +243,7 @@ class EntanglerEEM(eem_mod._EEM):
 
         io_class = {"input": ttl_serdes_7series.Input_8X, "output": ttl_simple.Output}
         num_outputs = entangler_settings.NUM_OUTPUT_CHANNELS
-        num_inputs = entangler_settings.NUM_INPUT_SIGNALS
+        num_inputs = entangler_settings.NUM_ENTANGLER_INPUT_SIGNALS
         if uses_reference:
             num_inputs += 1
         num_running_outputs = 1 if running_output else 0

@@ -517,7 +517,7 @@ class EntanglerCore(Module):
                 should be one longer).
             input_phys (typing.Sequence["PHY"]): TTLInput physical gateware modules
                 that register an input TTL event. Expects a list of
-                ``settings.NUM_INPUT_SIGNALS`` input APD/TTL signals.
+                ``settings.NUM_ENTANGLER_INPUT_SIGNALS`` input APD/TTL signals.
             reference_phy (PHY): Reference input that provides the gating trigger
                 for the other inputs. In Oxford's experiment, this is a signal
                 from a 422nm (ps?) pulsed laser.
@@ -537,7 +537,7 @@ class EntanglerCore(Module):
 
         # # #
 
-        assert len(input_phys) == settings.NUM_INPUT_SIGNALS  # noqa: E203
+        assert len(input_phys) == settings.NUM_ENTANGLER_INPUT_SIGNALS  # noqa: E203
         use_reference_pulse = reference_phy is not None
         if core_link_pads is None or len(core_link_pads) == 0 and not simulate:
             # option to disable inter-entangler comm if not simulating
@@ -582,7 +582,7 @@ class EntanglerCore(Module):
         self.submodules.apd_gaters = gaters
 
         self.submodules.heralder = PatternMatcher(
-            num_inputs=settings.NUM_INPUT_SIGNALS,
+            num_inputs=settings.NUM_ENTANGLER_INPUT_SIGNALS,
             num_patterns=settings.NUM_PATTERNS_ALLOWED,
         )
 

@@ -46,7 +46,7 @@ def test_core_basic(request, ip_core: CoreTestHarness):
 
     def basic_core_function():
         # *** SETUP ***
-        num_inputs = settings.NUM_INPUT_SIGNALS
+        num_inputs = settings.NUM_ENTANGLER_INPUT_SIGNALS
         num_outputs = settings.NUM_OUTPUT_CHANNELS
 
         # setup state machine settings
@@ -260,7 +260,7 @@ def test_phy_basic(request, ip_phy: PhyTestHarness):
             status = [0]
             time_remaining = [0]
             triggers = [0]
-            timestamps = [[0]] * settings.NUM_INPUT_SIGNALS
+            timestamps = [[0]] * settings.NUM_ENTANGLER_INPUT_SIGNALS
 
             yield from ip_phy.read(entangler.phy.ADDRESS_READ.TIME_REMAINING, time_remaining)
             _LOGGER.debug("Time remaining: %i", time_remaining[0])

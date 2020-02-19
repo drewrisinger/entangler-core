@@ -54,13 +54,13 @@ class Entangler:
         self.is_master = is_master
         self.ref_period_mu = self.core.seconds_to_mu(self.core.coarse_ref_period)
         self.num_outputs = settings.NUM_OUTPUT_CHANNELS
-        self.num_inputs = settings.NUM_INPUT_SIGNALS
+        self.num_inputs = settings.NUM_ENTANGLER_INPUT_SIGNALS
         self._SEQUENCER_TIME_MASK = (1 << settings.FULL_COUNTER_WIDTH) - 1
         self._ADDRESS_WRITE = entangler.phy.ADDRESS_WRITE
         self._ADDRESS_READ = entangler.phy.ADDRESS_READ
         self._NUM_ALLOWED_PATTERNS = settings.NUM_PATTERNS_ALLOWED
         self._PATTERN_LENGTH_MASK = (1 << settings.NUM_PATTERNS_ALLOWED) - 1
-        self._PATTERN_WIDTH = settings.NUM_INPUT_SIGNALS
+        self._PATTERN_WIDTH = settings.NUM_ENTANGLER_INPUT_SIGNALS
 
     @kernel
     def init(self):
@@ -295,7 +295,7 @@ class Entangler:
     def get_timestamp_mu(self, channel: TInt32) -> TInt32:
         """Get the input timestamp for an input channel.
 
-        Channels are numbered from (0, settings.NUM_INPUT_SIGNALS)
+        Channels are numbered from (0, settings.NUM_ENTANGLER_INPUT_SIGNALS)
         (add 1 if using a reference).
 
         The timestamp is the time offset, in mu, from the start of the cycle to

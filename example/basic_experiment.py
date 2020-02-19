@@ -16,7 +16,7 @@ from dynaconf import LazySettings
 settings = LazySettings(
     ROOT_PATH_FOR_DYNACONF=pkg_resources.resource_filename("entangler", "")
 )
-num_inputs = settings.NUM_INPUT_SIGNALS
+num_inputs = settings.NUM_ENTANGLER_INPUT_SIGNALS
 num_outputs = settings.NUM_OUTPUT_CHANNELS
 
 

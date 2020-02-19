@@ -71,7 +71,7 @@ def standalone_test_parametrized(
 ):
     """Test that all possible combinations of input signals occur."""
     _LOGGER.info("Starting EntCore param test: cycle_length=%i", cycle_length)
-    input_chans = settings.NUM_INPUT_SIGNALS
+    input_chans = settings.NUM_ENTANGLER_INPUT_SIGNALS
     output_chans = settings.NUM_OUTPUT_CHANNELS
     yield from dut.setup_core(cycle_length, 10000)
     yield from dut.set_sequencer_outputs([(i, 10 - i) for i in range(output_chans)])

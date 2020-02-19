@@ -148,7 +148,7 @@ We specify the other fields using ``X'd3``, where ``X=channel_bits`` from above.
 #### Writing Special Registers
 
 Set ``control = 2'd0``.
-When defining bits below, let ``H`` be NUM_PATTERNS (heralds), ``I`` be NUM_INPUT_SIGNALS
+When defining bits below, let ``H`` be NUM_PATTERNS (heralds), ``I`` be NUM_ENTANGLER_INPUT_SIGNALS
 (set in [settings.toml](./settings.toml)).
 
 | Function  | Other field value | Data field   |

@@ -87,10 +87,10 @@ class PhyTestHarness(migen.Module):
         for i, h in enumerate(heralds):
             # enable bit
             data |= (1 << i) << (
-                settings.NUM_INPUT_SIGNALS * settings.NUM_PATTERNS_ALLOWED
+                settings.NUM_ENTANGLER_INPUT_SIGNALS * settings.NUM_PATTERNS_ALLOWED
             )
             # move herald to appropriate position in register
-            data |= h << (settings.NUM_INPUT_SIGNALS * i)
+            data |= h << (settings.NUM_ENTANGLER_INPUT_SIGNALS * i)
         yield from self.write(entangler.phy.ADDRESS_WRITE.PATTERNS, data)
 
     def set_event_times(
