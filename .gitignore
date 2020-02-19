@@ -118,3 +118,7 @@ venv.bak/
 
 # ARTIQ Build outputs
 artiq_kasli/
+
+# ARTIQ Master artifacts (used when running artiq_master in example/)
+last_rid.pyon
+dataset_db.pyon
