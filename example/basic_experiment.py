@@ -31,7 +31,10 @@ class EntanglerDemo(artiq_env.EnvExperiment):
         self.setattr_device("core")
         self.setattr_device("entangler")
         self.out0_0 = self.get_device("out0-0")
-        self.inputs = [self.get_device("in1-{}".format(i)) for i in range(4, 8)]
+        self.entangle_inputs = [
+            self.get_device("in1-{}".format(i)) for i in range(0, 4)
+        ]
+        self.generic_inputs = [self.get_device("in1-{}".format(i)) for i in range(4, 8)]
 
     @kernel
     def run(self):
@@ -63,7 +66,7 @@ class EntanglerDemo(artiq_env.EnvExperiment):
     def init(self):
         """One-time setup on device != entangler."""
         self.out0_0.pulse(1.5 * aq_units.us)  # marker signal for observing timing
-        for ttl_input in self.inputs:
+        for ttl_input in self.entangle_inputs:
             ttl_input.input()
 
     @kernel
@@ -104,10 +107,10 @@ class EntanglerDemo(artiq_env.EnvExperiment):
         with parallel:
             # This generates output events on the bus -> entangler
             # when rising edges are detected
-            self.inputs[0].gate_rising_mu(numpy.int64(timeout_length))
-            self.inputs[1].gate_rising_mu(numpy.int64(timeout_length))
-            self.inputs[2].gate_rising_mu(numpy.int64(timeout_length))
-            self.inputs[3].gate_rising_mu(numpy.int64(timeout_length))
+            self.entangle_inputs[0].gate_rising_mu(numpy.int64(timeout_length))
+            self.entangle_inputs[1].gate_rising_mu(numpy.int64(timeout_length))
+            self.entangle_inputs[2].gate_rising_mu(numpy.int64(timeout_length))
+            self.entangle_inputs[3].gate_rising_mu(numpy.int64(timeout_length))
             end_timestamp, reason = self.entangler.run_mu(timeout_length)
         # must wait after entangler ends to schedule new events.
         # Doesn't strictly NEED to break_realtime, but it's safe.
