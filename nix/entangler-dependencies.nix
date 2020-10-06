@@ -45,4 +45,29 @@ rec {
       license = licenses.mit;
     };
   };
+
+  python-dotenv = python3Packages.buildPythonPackage rec {
+    pname = "python-dotenv";
+    version = "0.10.3";
+
+    src = python3Packages.fetchPypi {
+      inherit pname version;
+      sha256 = "f157d71d5fec9d4bd5f51c82746b6344dffa680ee85217c123f4a0c8117c4544";
+    };
+
+    propagatedBuildInputs = with python3Packages; [ click ipython sh ];
+
+    doCheck = true;
+    checkInputs = with python3Packages; [ pytestCheckHook mock ];
+    dontUseSetuptoolsCheck = true;
+    pytestFlagsArray = [
+      "--ignore=tests/test_cli.py"
+    ];
+
+    meta = with stdenv.lib; {
+      homepage = "https://github.com/theskumar/python-dotenv";
+      description = "Get and set values in your .env file in local and production servers.";
+      license = licenses.bsd3;
+    };
+  };
 }
